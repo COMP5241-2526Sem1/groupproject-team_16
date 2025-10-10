@@ -1,0 +1,16 @@
+{
+    "name": "polyclass-app",
+    "version": "1.0.0",
+    "description": "PolyClass teacher prototype (no DB, in-memory API)",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+      "cors": "^2.8.5",
+      "express": "^4.19.2"
+    }
+  }
+  
