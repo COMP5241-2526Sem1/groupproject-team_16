@@ -6,7 +6,7 @@ const getDoubaoResponse = require('./api/llm_api/doubao_api.js');
 const { dbQuery, dbRun, tableManager, recordManager } = require('./api/database/database_manager.js');
 
 const app = express();
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
