@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PolyClass Student Prototype</title>
+  <style>
+    :root{
+      --bg:#f5f9ff; --panel:#e6f0ff; --card:#ffffff; --border:#bcd2f0; --muted:#557aa3;
+      --text:#0a1f33; --primary:#3a82f6; --primary-2:#60a5fa; --accent:#22d3ee;
+      --ok:#16a34a; --warn:#f59e0b; --danger:#dc2626; --sidebar-width:260px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC",sans-serif}
+    a{color:inherit;text-decoration:none}
+    .btn{display:inline-flex;gap:8px;align-items:center;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel);cursor:pointer;transition:background .2s}
+    .btn.primary{background:linear-gradient(90deg,var(--primary),var(--primary-2));border:0;color:#fff;font-weight:700}
+    .btn:hover{background:var(--primary-2);color:#fff}
+    .btn.ghost{background:transparent}
+    .input,select,textarea{padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);width:100%}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+    .grid{display:grid;gap:16px}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .muted{color:var(--muted)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+    .status{padding:4px 8px;border-radius:999px;font-size:12px}
+    .on{background:#dcfce7;color:#166534}
+    .off{background:#fee2e2;color:#991b1b}
+    .topbar{position:fixed;left:0;right:0;top:0;height:56px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:20}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:700;font-size:18px}
+    .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#60a5fa,#22d3ee)}
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);cursor:pointer;border:2px solid #fff}
+    .layout{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}
+    .sidebar{width:var(--sidebar-width);background:var(--panel);border-right:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:8px}
+    .nav a, .nav .nav-item{padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px;color:var(--muted);transition:background .2s;cursor:pointer}
+    .nav a.active,.nav .nav-item.active,.nav a:hover,.nav .nav-item:hover{background:var(--primary-2);color:#fff}
+    .content{flex:1;padding:18px;overflow:auto}
+    .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .login-panel{max-width:560px;width:100%}
+    .role{flex:1;padding:14px;border-radius:12px;border:1px solid var(--border);background:#fff;text-align:center;cursor:pointer}
+    .role.active{outline:2px solid var(--primary)}
+    .activity-aside{position:sticky;top:86px;display:flex;flex-direction:column;gap:10px}
+    .activity-aside .mini-card{padding:12px;border-radius:14px;border:1px solid var(--border);background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .mini-title{font-weight:700;margin-bottom:4px}
+    .mini-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .bottom-dock{position:fixed;left: calc(var(--sidebar-width) + 18px);right:18px;bottom:16px;z-index:14;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+    .question-chip{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:0 2px 6px rgba(0,0,0,.05);display:flex;gap:8px;align-items:center;cursor:pointer}
+    .deadline{font-size:12px;color:var(--muted)}
+    .modal-mask{position:fixed;inset:0;background:rgba(10,31,51,.35);display:none;align-items:center;justify-content:center;z-index:30}
+    .modal{width:min(760px,92vw);background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.2)}
+    .modal header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .modal footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+
+    /* Navigation */
+    .nav-title{padding:12px 16px;font-weight:800;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-radius:10px}
+    .nav-title:hover{background:var(--panel)}
+    .nav-group{margin-left:8px}
+    .subnav{margin:6px 0 6px 16px;display:flex;flex-direction:column;gap:4px}
+    .caret{font-size:12px;opacity:.8;transition:transform .18s ease}
+    .caret.expanded{transform:rotate(90deg)}
+    .course-parent{display:flex;justify-content:space-between;align-items:center}
+    .course-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* Chat */
+    .segmented{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .segmented button{border:0;background:#fff;padding:8px 12px}
+    .segmented button.active{background:var(--primary-2);color:#fff}
+    .chat-box{display:flex;flex-direction:column;height:420px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .chat-scroll{flex:1;overflow:auto;padding:12px;background:#f8fbff}
+    .msg{margin:8px 0;display:flex;gap:8px}
+    .msg.me{justify-content:flex-end}
+    .msg .bubble{max-width:70%;padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:#fff}
+    .msg.me .bubble{background:#e8f0ff}
+    .chat-input{display:flex;gap:8px;padding:8px;border-top:1px solid var(--border);background:#fff}
+
+    /* Calendar */
+    .filter-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .calendar-day{font-weight:700;margin:8px 0 4px}
+    .calendar-item{padding:10px;border:1px solid var(--border);border-radius:10px;margin:6px 0;background:#fff}
+
+    /* Simple resource chip */
+    .chip{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff}
+    #error-bar{position:fixed;left:0;right:0;bottom:0;background:#dc2626;color:#fff;padding:8px 12px;display:none;z-index:9999}
+    #error-bar .close{float:right;cursor:pointer;padding:0 6px}
+
+    @media(max-width:980px){
+      .grid.cols-3{grid-template-columns:repeat(2,1fr)}
+      .sidebar{width:auto;flex-direction:row;border-right:0;border-bottom:1px solid var(--border)}
+      .content{padding:12px}
+      .activity-aside{position:static}
+      .bottom-dock{left:12px;right:12px}
+    }
+  </style>
+</head>
+<body>
+  <main id="app"></main>
+
+  <!-- Common Modal -->
+  <div id="modal-mask" class="modal-mask" onclick="closeModal(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="event.stopPropagation()">
+      <header>
+        <h3 id="modal-title" style="margin:0">New</h3>
+        <button class="btn" aria-label="Close modal" onclick="closeModal()">✖</button>
+      </header>
+      <div id="modal-body" style="display:flex;flex-direction:column;gap:10px"></div>
+      <footer id="modal-footer">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn primary" id="modal-save">Save</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Error Bar -->
+  <div id="error-bar"><span id="error-text"></span><span class="close" onclick="this.parentNode.style.display='none'">×</span></div>
+
+  <script>
+  /************** Error Overlay **************/
+  (function setupErrorOverlay(){
+    const show = (msg)=>{
+      const bar = document.getElementById('error-bar');
+      const txt = document.getElementById('error-text');
+      if(bar && txt){ txt.textContent = String(msg || 'Unknown error occurred'); bar.style.display = 'block'; }
+      console.error('[PolyClass Error]', msg);
+    };
+    window.addEventListener('error', (e)=> show(e?.error?.message || e?.message || e));
+    window.addEventListener('unhandledrejection', (e)=> show(e?.reason?.message || e?.reason || e));
+  })();
+
+  /************** Basic Utilities/State **************/
+  const API_BASE = '';
+  const TABS = [
+    { key:'hub',       label:'Learning Hub',            hash:'#/student/classroom/hub' },
+    { key:'ai',        label:'AI Assistant',            hash:'#/student/classroom/ai' },
+    { key:'discuss',   label:'Discussion',              hash:'#/student/classroom/discuss' },
+    { key:'timeline',  label:'Timetable',               hash:'#/student/classroom/timeline' },
+    { key:'insights',  label:'Study Data',              hash:'#/student/classroom/insights' },
+  ];
+  const state = {
+    user: null,
+    courses: [],
+    sessions: {},
+    questions: [],
+    submissions: {},          // { qid: {text, files[], time} }
+    discussions: {},
+    hub: {},                  // { cid: { preview: Resource[], review: Resource[] } }
+    ui: {
+      myCoursesExpanded: true,
+      groupExpanded: {},
+      courseExpanded: {},
+      timelineFilter: 'all'
+    }
+  };
+
+  /** Resource type */
+  function makeRes(partial={}){
+    return Object.assign({
+      id:'res-'+Date.now()+Math.random().toString(36).slice(2,6),
+      title:'Untitled',
+      type:'link', // link | file | note
+      url:'',
+      note:'',
+      from:'teacher', // teacher | self
+      pushedAt:new Date().toISOString()
+    }, partial);
+  }
+
+  const routes = {
+    '#/login': renderLogin,
+    '#/student': renderStudentShell,
+    '#/student/profile': renderProfile,
+    '#/student/courses': renderCourses,
+    '#/student/classroom': renderClassroom,
+    '#/student/classroom/hub': renderHub,
+    '#/student/classroom/ai': renderClassAI,
+    '#/student/classroom/discuss': renderClassDiscuss,
+    '#/student/classroom/timeline': renderClassTimeline,
+    '#/student/classroom/insights': renderStudyInsights,
+    '#/student/hall': renderHall,           // read-only
+    '#/student/meeting': renderMeeting      // placeholder
+  };
+
+  function mount(html){ const el = document.getElementById('app'); if(el) el.innerHTML = html; }
+  function goto(hash){ location.hash = hash; }
+  function qs(sel, root=document){ return root.querySelector(sel); }
+  function qsa(sel, root=document){ return [...root.querySelectorAll(sel)]; }
+  function safeJSON(res){ return res.json().catch(()=>({ message: res.statusText })); }
+  async function api(path, options={}){
+    const res = await fetch(API_BASE + path, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      ...options
+    });
+    if(!res.ok){
+      const t = await safeJSON(res);
+      throw new Error(t.message || `HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+  function toLocalDatetimeValue(date){
+    const pad = n => String(n).padStart(2,'0');
+    const y = date.getFullYear(), m = pad(date.getMonth()+1), d = pad(date.getDate());
+    const hh = pad(date.getHours()), mm = pad(date.getMinutes());
+    return `${y}-${m}-${d}T${hh}:${mm}`;
+  }
+  function fmtDeadline(iso){
+    try{
+      if(!iso) return '';
+      const d = new Date(iso);
+      if(isNaN(d)) return iso;
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }catch{ return String(iso||''); }
+  }
+  function escapeHTML(str=''){
+    return String(str).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s]));
+  }
+  function formatCourseTitle(title){
+    if(!title) return '';
+    let t = title.replace(/class/g,'').trim();
+    const m = t.match(/[A-Za-z0-9]+/g);
+    if(m && m.length>0){ const w = m[0]; return w.length>14 ? w.slice(0,14) : w; }
+    const first = t.split(/\s+/)[0] || t;
+    return first.length>14 ? first.slice(0,14) : first;
+  }
+  function removeFloatingUI(){
+    qs('#bottom-dock')?.remove();
+    const mask = qs('#modal-mask');
+    if(mask) mask.style.display = 'none';
+  }
+
+  /************** Sidebar (similar structure) **************/
+  function groupCourses(courses){
+    const map = {};
+    (courses||[]).forEach(c=>{
+      const g = (c.group || c.category || 'Other').toString();
+      if(!map[g]) map[g] = [];
+      map[g].push(c);
+    });
+    return map;
+  }
+  function courseSubnavHTML(cid){
+    return `
+      <div class="subnav" data-course-sub="${cid}" style="display:${state.ui.courseExpanded[cid] ? 'flex' : 'none'}">
+        ${TABS.map(t=>`
+          <a class="nav-item course-sub-link" data-course-id="${cid}" data-href="${t.hash}" href="${t.hash}">• ${t.label}</a>
+        `).join('')}
+      </div>
+    `;
+  }
+  function buildMyCourses(groups){
+    const expanded = state.ui.myCoursesExpanded;
+    const groupKeys = Object.keys(groups || {}).sort();
+    if(groupKeys.length === 0){
+      return `
+      <div class="nav-title" id="my-courses-title" role="button" tabindex="0" aria-expanded="${expanded}">
+        <span>My Courses</span><span class="caret ${expanded?'expanded':''}">${expanded?'▼':'▶'}</span>
+      </div>
+      <div id="my-courses-box" style="display:${expanded?'block':'none'}">
+        <div class="muted" style="padding:8px 12px">No courses</div>
+      </div>`;
+    }
+    const groupsHTML = groupKeys.map(k=>{
+      const gid = `group-${k}`;
+      if(typeof state.ui.groupExpanded[gid] === 'undefined') state.ui.groupExpanded[gid] = true;
+      const gExpanded = state.ui.groupExpanded[gid];
+      const list = groups[k] || [];
+      const coursesHTML = list.length ? list.map(c=>{
+        if(state.ui.courseExpanded[c.id] === undefined) state.ui.courseExpanded[c.id] = false;
+        const cExp = state.ui.courseExpanded[c.id];
+        return `
+          <div class="nav-item course-parent" data-course-toggle="${c.id}" role="button" tabindex="0" aria-expanded="${cExp}">
+            <span class="course-name">📚 ${escapeHTML(formatCourseTitle(c.title||c.id))}</span>
+            <span class="caret ${cExp?'expanded':''}">${cExp?'▼':'▶'}</span>
+          </div>
+          ${courseSubnavHTML(c.id)}
+        `;
+      }).join('') : `<div class="muted" style="padding:8px 12px">No courses</div>`;
+      return `
+        <div class="nav-group">
+          <div class="nav-item" data-group="${gid}" role="button" tabindex="0" aria-expanded="${gExpanded}">
+            <span>📁 ${escapeHTML(k)}</span>
+            <span class="caret ${gExpanded ? 'expanded' : ''}">${gExpanded ? '▼' : '▶'}</span>
+          </div>
+          <div class="subnav" data-sub="${gid}" style="display:${gExpanded ? 'flex' : 'none'}">
+            ${coursesHTML}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="nav-title" id="my-courses-title" role="button" tabindex="0" aria-expanded="${expanded}">
+        <span>My Courses</span><span class="caret ${expanded?'expanded':''}">${expanded?'▼':'▶'}</span>
+      </div>
+      <div id="my-courses-box" style="display:${expanded?'block':'none'}">
+        ${groupsHTML}
+      </div>
+    `;
+  }
+  function buildPrefixLinks(){
+    return `
+      <a class="nav-item" href="#/student/hall">🏛️ Course Hall</a>
+      <a class="nav-item" href="#/student/meeting">🎥 Video Meeting</a>
+    `;
+  }
+  function renderSidebar(){
+    const nav = qs('.sidebar .nav');
+    if(!nav) return;
+    const groups = groupCourses(state.courses || []);
+    nav.innerHTML = `${buildMyCourses(groups)}<div style="height:8px"></div>${buildPrefixLinks()}`;
+    const myTitle = qs('#my-courses-title', nav);
+    if(myTitle){
+      const toggle = () => { state.ui.myCoursesExpanded = !state.ui.myCoursesExpanded; renderSidebar(); highlightActiveNav(); };
+      myTitle.addEventListener('click', toggle);
+      myTitle.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); }});
+    }
+    qsa('[data-course-toggle]', nav).forEach(el=>{
+      const cid = el.getAttribute('data-course-toggle');
+      const toggle = () => { state.ui.courseExpanded[cid] = !state.ui.courseExpanded[cid]; renderSidebar(); highlightActiveNav(); };
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); }});
+    });
+    qsa('.course-sub-link', nav).forEach(a=>{
+      a.addEventListener('click', ()=>{
+        const cid = a.getAttribute('data-course-id');
+        const href = a.getAttribute('data-href');
+        sessionStorage.setItem('currCourse', cid);
+        setTimeout(highlightActiveNav, 0);
+      });
+    });
+    qsa('[data-group]', nav).forEach(el=>{
+      const gid = el.getAttribute('data-group');
+      const toggle = () => { state.ui.groupExpanded[gid] = !state.ui.groupExpanded[gid]; renderSidebar(); highlightActiveNav(); };
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); }});
+    });
+    highlightActiveNav();
+  }
+  function highlightActiveNav(){
+    const nav = qs('.sidebar .nav'); if(!nav) return;
+    qsa('.nav a, .nav .nav-item', nav).forEach(el=>el.classList.remove('active'));
+    const h = location.hash || '';
+    const currCid = sessionStorage.getItem('currCourse');
+    const pref = nav.querySelector(`a[href="${h}"]`); if(pref) pref.classList.add('active');
+    const sub = nav.querySelector(`.course-sub-link[data-course-id="${currCid}"][data-href="${h}"]`);
+    if(sub){
+      sub.classList.add('active');
+      const parent = sub.closest('.nav-group, #my-courses-box')?.querySelector(`.course-parent[data-course-toggle="${currCid}"]`);
+      parent?.classList.add('active'); return;
+    }
+    if(h === '#/student/classroom' && currCid){
+      nav.querySelector(`.course-parent[data-course-toggle="${currCid}"]`)?.classList.add('active');
+    }
+  }
+
+  /************** Page Framework **************/
+  function shell(content){
+    return `
+    <header class='topbar'>
+      <div class='brand' onclick="goto('#/student/courses')" style='cursor:pointer'>
+        <div class='logo'></div>
+        <div>PolyClass</div>
+      </div>
+      <div class='top-actions'>
+        <span>${state.user?.email||''}</span>
+        <div class='avatar' onclick="goto('#/student/profile')" title='Profile'></div>
+      </div>
+    </header>
+    <div class='layout'>
+      <aside class='sidebar'><nav class='nav' aria-label="Side Navigation"></nav></aside>
+      <section class='content'>${content}</section>
+    </div>`;
+  }
+  function updateSidebar(){ renderSidebar(); }
+
+  /************** Login **************/
+  function renderLogin(){
+    mount(`
+      <div class='center'>
+        <div class='card login-panel'>
+          <h2>Login to PolyClass</h2>
+          <p class='muted'>Please login as a student (student portal).</p>
+          <div class='grid cols-3' style='margin:12px 0'>
+            <div class='role active' data-role='student' tabindex="0" role="button" aria-pressed="true">Student</div>
+            <div class='role' data-role='teacher' tabindex="0" role="button" aria-pressed="false">Teacher</div>
+            <div class='role' data-role='admin' tabindex="0" role="button" aria-pressed="false">Admin</div>
+          </div>
+          <div style='display:flex;gap:10px;'>
+            <input class='input' id='email' placeholder='Email' value='student@polyclass.edu' />
+            <input class='input' id='pwd' placeholder='Password' type='password' value='123456' />
+          </div>
+          <div style='margin-top:16px;display:flex;justify-content:space-between;align-items:center'>
+            <span class='muted'>Student Portal · Light Blue Theme</span>
+            <button class='btn primary' id='login-btn'>Login</button>
+          </div>
+        </div>
+      </div>
+    `);
+    qsa('.role').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        qsa('.role').forEach(x=>x.classList.remove('active'));
+        el.classList.add('active');
+      });
+    });
+    qs('#login-btn')?.addEventListener('click', ()=>{
+      const email = qs('#email')?.value.trim();
+      const password = qs('#pwd')?.value || '';
+      if(!email || !password){ alert('Please enter email and password'); return; }
+      state.user = {email, role:'student', name:'Student'};
+      goto('#/student');
+    });
+  }
+  function renderStudentShell(){ goto('#/student/courses'); }
+
+  function renderProfile(){
+    const user = state.user || { name:'Student', email:'' };
+    const html = `
+      <h2>Personal Profile</h2>
+      <div class='card' style='max-width:560px'>
+        <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px'>
+          <div class='avatar' style='width:64px;height:64px;border-radius:12px'></div>
+          <div>
+            <div style='font-weight:700'>${escapeHTML(user.name||'Student')}</div>
+            <div class='muted'>${escapeHTML(user.email||'')}</div>
+          </div>
+        </div>
+        <div style='margin-top:12px'>
+          <div class='muted'>Role</div>
+          <div style='margin:6px 0 12px'>${escapeHTML(user.role||'student')}</div>
+          <div style='display:flex;gap:8px'>
+            <button class='btn' onclick="goto('#/student/courses')">Back to Courses</button>
+            <button class='btn primary' onclick='(function(){ state.user=null; sessionStorage.removeItem("currCourse"); goto("#/login"); })()'>Logout</button>
+          </div>
+        </div>
+      </div>
+    `;
+    mount(shell(html)); updateSidebar();
+  }
+
+  /************** Courses **************/
+  async function renderCourses(){
+    if(state.courses.length===0){
+      state.courses = [
+        {id:'CS101', title:'Computer Fundamentals', teacher:'Mr. Wang', group:'Computer Science', students:45, updated:'10-09'},
+        {id:'LING201', title:'Introduction to Semantics', teacher:'Ms. Zhou', group:'Linguistics', students:60, updated:'10-08'},
+        {id:'AI500', title:'AI Application Practice', teacher:'Ms. Li', group:'Computer Science', students:38, updated:'10-07'}
+      ];
+      state.sessions['CS101'] = [{ time:'2025-10-12 10:00', tag:'Class', text:'Lecture 4: C Basics' }];
+      state.sessions['LING201'] = [{ time:'2025-10-13 09:00', tag:'Class', text:'Lecture 3: Semantic Roles' }];
+      state.sessions['AI500'] = [{ time:'2025-10-12 14:00', tag:'Class', text:'Lecture 2: Data Cleaning' }];
+
+      // seed hub (empty containers)
+      state.courses.forEach(c=>{
+        if(!state.hub[c.id]) state.hub[c.id] = { preview:[], review:[] };
+      });
+
+      // seed questions
+      if(!state.questions.length){
+        state.questions = [
+          {id:'q1', title:'Lesson Key Points (Short Answer)', deadlineISO:'2025-10-14T18:00'},
+          {id:'q2', title:'In-class Exercise #3', deadlineISO:'2025-10-15T20:00'}
+        ];
+      }
+    }
+    const cards = (state.courses||[]).map(c=>`
+      <div class='card'>
+        <b>${escapeHTML(c.title||c.id||'Unnamed Course')}</b>
+        <div class='muted'>ID: ${escapeHTML(c.id||'-')} · Teacher ${escapeHTML(c.teacher||'-')} · Students ${c.students ?? 0} · Updated ${escapeHTML(c.updated||'-')}</div>
+        <div style='margin-top:8px;display:flex;gap:8px;align-items:center'>
+          <button class='btn primary' onclick="openClassroom('${c.id}')">Enter Classroom</button>
+          <span class='status on'>Enrolled</span>
+        </div>
+      </div>`).join('');
+    const html = `
+      <h2>My Courses</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+        <div class="muted">Browse your enrolled courses</div>
+        <div style="display:flex; gap:8px">
+          <button class="btn">➕ Join via Code</button>
+          <button class="btn">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class='grid cols-2'>${cards || '<div class="card">No courses</div>'}</div>`;
+    mount(shell(html)); updateSidebar();
+  }
+  function openClassroom(cid){
+    if(!cid) return;
+    sessionStorage.setItem('currCourse', cid);
+    const h = location.hash || '';
+    if(h.startsWith('#/student/classroom')) goto(h); else goto('#/student/classroom');
+  }
+
+  /************** Classroom wrapper **************/
+  async function renderClassroom(){
+    let cid = sessionStorage.getItem('currCourse');
+    if(!cid && state.courses.length){ cid = state.courses[0]?.id; sessionStorage.setItem('currCourse', cid); }
+    const courseId = cid || '';
+    const c = (state.courses.find(x=>x.id===courseId) || { id: courseId, title: courseId });
+
+    const inner = `
+      ${pageHeaderHTML_Student(c,'hub')}
+      <div class='card'>
+        <h3 style='margin:0'>Welcome</h3>
+        <p class='muted' style='margin:6px 0 0'>Use the tabs to access Learning Hub, AI Assistant, Discussion, Timetable and Study Data.</p>
+      </div>`;
+    mount(shell(inner));
+    updateSidebar();
+    bindTabs();
+    renderBottomDock(courseId);
+  }
+
+  /************** Tabs & Header **************/
+  function tabsHTML(activeKey){
+    return `<div style='margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap'>
+      ${TABS.map(t=>`<button class='btn ${t.key===activeKey?'primary':''}' data-href='${t.hash}'>${t.label}</button>`).join('')}
+    </div>`;
+  }
+  function bindTabs(){ qsa('[data-href]').forEach(b=> b.addEventListener('click', ()=> goto(b.getAttribute('data-href')))); }
+  function pageHeaderHTML_Student(course, activeKey){
+    return `
+      <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px'>
+        <div>
+          <small class='muted'>Course / ${escapeHTML(course.id||'—')}</small>
+          <h2 style='margin:4px 0 0 0'>${escapeHTML(course.title||course.id||'Unnamed Course')}</h2>
+        </div>
+        <div style='display:flex;gap:8px;align-items:center'>
+          <button class='btn' onclick="goto('#/student/courses')">Back to Course List</button>
+          <button class='btn' onclick="copyJoinCode()">Copy Join Code</button>
+        </div>
+      </div>
+      ${tabsHTML(activeKey)}
+    `;
+  }
+
+  /************** Learning Hub (Preview & Review) **************/
+  function ensureHub(cid){
+    if(!state.hub[cid]) state.hub[cid] = { preview:[], review:[] };
+    return state.hub[cid];
+  }
+  function renderHub(){
+    const cid = sessionStorage.getItem('currCourse') || '';
+    const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
+    const hub = ensureHub(cid);
+
+    const resList = (arr, area)=> arr.map(r=>`
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div style="min-width:0">
+            <b>${escapeHTML(r.title)}</b>
+            <div class="muted" style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
+              <span class="chip">Type: ${escapeHTML(r.type)}</span>
+              <span class="chip">From: ${escapeHTML(r.from)}</span>
+              <span class="chip">${fmtDeadline(r.pushedAt)}</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${r.url ? `<a class="btn" href="${escapeHTML(r.url)}" target="_blank" rel="noopener">Open</a>`:''}
+            <button class="btn" onclick="openAIDialog('${r.id}','${area}')">Ask AI about it</button>
+          </div>
+        </div>
+        ${r.note ? `<div class="muted" style="margin-top:6px">${escapeHTML(r.note)}</div>`:''}
+      </div>
+    `).join('') || '<div class="card">No resources yet</div>';
+
+    const html = `
+      ${pageHeaderHTML_Student(c,'hub')}
+      <div class="grid cols-2">
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">📘 Preview (Teacher-pushed & Self-added)</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="simulateTeacherPush('${cid}','preview')">Receive Teacher Push (Simulate)</button>
+        <button class="btn primary" onclick="openResEditor('preview')">+ Add Resource</button>
+      </div>
+    </div>
+    ${resList(hub.preview,'preview')}
+  </div>
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">📝 Review (Summary / Wrong-Book / Homework)</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="simulateTeacherPush('${cid}','review')">Receive Teacher Push (Simulate)</button>
+        <button class="btn primary" onclick="openResEditor('review')">+ Add Resource</button>
+      </div>
+    </div>
+    ${resList(hub.review,'review')}
+  </div>
+</div>
+`;
+mount(shell(html)); updateSidebar(); bindTabs(); renderBottomDock(cid);
+}
+function openResEditor(area){
+  const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
+  title.textContent = `Add Resource (${area==='preview'?'Preview':'Review'})`;
+  body.innerHTML = `
+    <label><div class="muted">Title</div><input id="res-title" class="input" placeholder="Required"/></label>
+    <label><div class="muted">Type</div>
+      <select id="res-type" class="input">
+        <option value="link">link</option>
+        <option value="file">file</option>
+        <option value="note">note</option>
+      </select>
+    </label>
+    <div id="res-url-wrap">
+      <label><div class="muted">Link</div><input id="res-url" class="input" placeholder="https://..."/></label>
+    </div>
+    <div id="res-file-wrap" style="display:none">
+      <label><div class="muted">File</div><input id="res-file" type="file" class="input"/></label>
+    </div>
+    <label><div class="muted">Notes</div><textarea id="res-note" class="input" rows="3" placeholder="Optional"></textarea></label>
+  `;
+  const typeSel = body.querySelector('#res-type');
+  typeSel.addEventListener('change', ()=>{
+    const t = typeSel.value;
+    qs('#res-url-wrap').style.display = (t==='link')?'block':'none';
+    qs('#res-file-wrap').style.display = (t==='file')?'block':'none';
+  });
+  save.onclick = ()=>{
+    const cid = sessionStorage.getItem('currCourse') || '';
+    const hub = ensureHub(cid);
+    const titleV = qs('#res-title').value.trim();
+    if(!titleV){ alert('Please enter a title'); return; }
+    const t = qs('#res-type').value;
+    const note = qs('#res-note').value.trim();
+    let url = '';
+    if(t==='link'){ url = qs('#res-url').value.trim(); }
+    if(t==='file'){
+      const f = qs('#res-file').files?.[0];
+      if(f){ url = URL.createObjectURL(f); }
+    }
+    const res = makeRes({ title:titleV, type:t, url, note, from:'self' });
+    hub[area].unshift(res);
+    closeModal();
+    renderHub();
+  };
+  qs('#modal-mask').style.display='flex';
+}
+function openAIDialog(resId, area){
+  const cid = sessionStorage.getItem('currCourse') || '';
+  const hub = ensureHub(cid);
+  const res = [...hub.preview, ...hub.review].find(x=>x.id===resId);
+  const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
+  title.textContent = `AI Chat: ${res?.title || ''}`;
+  body.innerHTML = `
+    <div class="muted">Ask AI about this resource (demo, no backend).</div>
+    <textarea id="ai-q" class="input" rows="4" placeholder="Enter your question..."></textarea>
+    <div id="ai-a" class="card" style="margin-top:6px;display:none"></div>
+  `;
+  save.textContent = 'Ask';
+  save.onclick = ()=>{
+    const q = qs('#ai-q').value.trim();
+    if(!q){ alert('Please enter a question'); return; }
+    const a = qs('#ai-a');
+    a.style.display='block';
+    a.innerHTML = `<b>AI:</b> Simulated answer based on resource “${escapeHTML(res?.title||'') }”. Your question is “${escapeHTML(q)}”.`;
+  };
+  qs('#modal-mask').style.display='flex';
+}
+function simulateTeacherPush(cid, area){
+  const hub = ensureHub(cid);
+  const res = makeRes({
+    title: area==='preview' ? 'Preview Material: Chapter 4 Slides' : 'Review Material: Week 3 Summary',
+    type:'link',
+    url:'https://example.com/resource',
+    from:'teacher'
+  });
+  hub[area].unshift(res);
+  alert('Received teacher push (simulated)');
+  renderHub();
+}
+
+/************** AI Assistant Page **************/
+function renderClassAI(){ renderSubpage('ai', ()=>`
+  <div class='grid cols-2'>
+    <div class='card'>
+      <h3 style='margin-top:0'>💬 Quick Chat</h3>
+      <div class='muted'>Simple local demo chat, can link with uploaded file titles below.</div>
+      <textarea id="ai-chat-q" class="input" rows="4" placeholder="Ask something..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class='btn primary' onclick="aiQuickAsk()">Ask</button>
+        <button class='btn' onclick="simulateTeacherPush(sessionStorage.getItem('currCourse')||'','preview')">Receive Teacher Push (Simulate)</button>
+      </div>
+      <div id="ai-chat-a" class="card" style="margin-top:10px;display:none"></div>
+    </div>
+    <div class='card'>
+      <h3 style='margin-top:0'>📤 Upload Files</h3>
+      <div class='muted'>Choose a file to add to the Hub (either preview/review). No backend, local blob URL used.</div>
+      <input id="ai-file" type="file" class="input" />
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <select id="ai-file-area" class="input" style="max-width:220px">
+          <option value="preview">Preview</option>
+          <option value="review">Review</option>
+        </select>
+        <button class='btn primary' onclick="addUploadToHub()">Add to Hub</button>
+      </div>
+    </div>
+  </div>`); }
+function aiQuickAsk(){
+  const q = qs('#ai-chat-q')?.value.trim();
+  const a = qs('#ai-chat-a');
+  if(!q){ alert('Please enter a question'); return; }
+  a.style.display='block';
+  a.innerHTML = `<b>AI:</b> Simulated answer. Your question is “${escapeHTML(q)}”.`;
+}
+function addUploadToHub(){
+  const f = qs('#ai-file')?.files?.[0];
+  if(!f){ alert('Please select a file'); return; }
+  const cid = sessionStorage.getItem('currCourse') || '';
+  const hub = ensureHub(cid);
+  const area = qs('#ai-file-area')?.value || 'preview';
+  const url = URL.createObjectURL(f);
+  hub[area].unshift(makeRes({ title:f.name, type:'file', url, from:'self' }));
+  alert('Added to Hub');
+}
+
+/************** Discussion (same layout, student tone) **************/
+function ensureDiscussion(cid){
+  if(!state.discussions[cid]){
+    state.discussions[cid] = {
+      chatMessages:[
+        {id:1, role:'teacher', name:'Teacher', text:'Hello everyone, class begins now~', time:fmtDeadline(new Date().toISOString())},
+        {id:2, role:'student', name:'Me', text:'Hello teacher!', time:fmtDeadline(new Date().toISOString())}
+      ],
+      posts:{ teacher:[], student:[] }
+    };
+  }
+  return state.discussions[cid];
+}
+function renderClassDiscuss(){
+  const cid = sessionStorage.getItem('currCourse') || '';
+  const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
+  const d = ensureDiscussion(cid);
+
+  const messagesHTML = (d.chatMessages || []).map(m => {
+    const isMe = m.role==='student' && m.name==='Me';
+    return '<div class="msg ' + (isMe ? 'me' : '') + '">' +
+      '<div class="bubble"><b>' + escapeHTML(m.name) + ':</b>' + escapeHTML(m.text) + '<div class="muted" style="font-size:12px">' + escapeHTML(m.time) + '</div></div>' +
+    '</div>';
+  }).join('');
+
+  const chatHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b>Real-time Discussion</b>
+        <div class="muted">Class Group Chat · Visible to All</div>
+      </div>
+      <div class="chat-box">
+        <div id="chat-scroll" class="chat-scroll">
+          ${messagesHTML}
+        </div>
+        <div class="chat-input">
+          <input id="chat-input" class="input" placeholder="Type and press Enter to send"/>
+          <button class="btn primary" id="chat-send">Send</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const postCard = (p)=>`
+    <div class="card">
+      <b>${escapeHTML(p.title)}</b>
+      <div class="muted" style="margin-top:6px">${escapeHTML(p.content||'')}</div>
+      <div class="muted" style="margin-top:6px;font-size:12px">Author: ${escapeHTML(p.author||'—')} · ${escapeHTML(p.time||'')}</div>
+    </div>
+  `;
+  const postsHTML = `
+    <div class="grid cols-2">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <b>Teacher Announcements/Discussions</b>
+        </div>
+        ${d.posts.teacher.map(postCard).join('') || '<div class="card">No teacher posts yet</div>'}
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <b>Student Discussion Area</b>
+          <button class="btn" onclick="openPostEditor('student')">+ New Post</button>
+        </div>
+        ${d.posts.student.map(postCard).join('') || '<div class="card">No student posts yet</div>'}
+      </div>
+    </div>
+  `;
+  const inner = `
+    ${pageHeaderHTML_Student(c,'discuss')}
+    <div class="segmented" style="margin-bottom:12px">
+      <button class="seg-btn active" data-panel="chat">Real-time Discussion</button>
+      <button class="seg-btn" data-panel="posts">Posts Discussion</button>
+    </div>
+    <div id="panel-chat">${chatHTML}</div>
+    <div id="panel-posts" style="display:none">${postsHTML}</div>
+  `;
+  mount(shell(inner)); updateSidebar(); bindTabs();
+
+  qsa('.seg-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      qsa('.seg-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const p = b.getAttribute('data-panel');
+      qs('#panel-chat').style.display = (p==='chat')?'block':'none';
+      qs('#panel-posts').style.display = (p==='posts')?'block':'none';
+    });
+  });
+  const send = ()=>{
+    const ipt = qs('#chat-input'); if(!ipt) return;
+    const txt = (ipt.value||'').trim(); if(!txt) return;
+    const msg = {id:Date.now(), role:'student', name:'Me', text:txt, time:fmtDeadline(new Date().toISOString())};
+    d.chatMessages.push(msg);
+    renderClassDiscuss();
+    setTimeout(()=>{ const sc=qs('#chat-scroll'); if(sc){ sc.scrollTop=sc.scrollHeight; } },0);
+  };
+  qs('#chat-send')?.addEventListener('click', send);
+  qs('#chat-input')?.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ send(); } });
+}
+function openPostEditor(role){
+  const cid = sessionStorage.getItem('currCourse') || '';
+  const d = ensureDiscussion(cid);
+  const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
+  title.textContent = `New Post (${role==='teacher'?'Teacher':'Student'})`;
+  body.innerHTML = `
+    <label><div class="muted">Title</div><input id="post-title" class="input" placeholder="Enter title (required)"/></label>
+    <label><div class="muted">Content</div><textarea id="post-content" class="input" rows="4" placeholder="Enter content"></textarea></label>
+  `;
+  save.onclick = ()=>{
+    const t = qs('#post-title')?.value.trim(); const c = qs('#post-content')?.value.trim();
+    if(!t){ alert('Please enter a title'); return; }
+    const post = { title:t, content:c, time:fmtDeadline(new Date().toISOString()), author: role==='teacher'?'Teacher':'Me' };
+    d.posts[role].unshift(post);
+    closeModal(); renderClassDiscuss();
+  };
+  qs('#modal-mask').style.display='flex';
+}
+
+
+  /************** Timetable **************/
+function renderClassTimeline(){
+  const cid = sessionStorage.getItem('currCourse') || '';
+  const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
+  const sessions = state.sessions[cid] || [];
+  const assignments = (state.questions||[])
+    .filter(q=>q.deadlineISO).map(q=>({ time: (q.deadlineISO||'').replace('T',' '), tag:'Assignment', text:`${q.title}` }));
+
+  const filter = state.ui.timelineFilter || 'all';
+  const items = [
+    ...(filter!=='assignment' ? sessions : []),
+    ...(filter!=='class' ? assignments : [])
+  ].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
+
+  const groups = {};
+  items.forEach(i=>{
+    const d = (i.time||'').slice(0,10) || 'Uncategorized';
+    if(!groups[d]) groups[d]=[];
+    groups[d].push(i);
+  });
+
+  const calendarHTML = Object.keys(groups).sort().map(day=>`
+    <div class="calendar-day">${escapeHTML(day)}</div>
+    ${groups[day].map(i=>`
+      <div class="calendar-item">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <b>${escapeHTML(i.text||'')}</b>
+          <span class="status ${i.tag==='Assignment'?'off':'on'}">${escapeHTML(i.tag||'Class')}</span>
+        </div>
+        <div class="muted" style="margin-top:6px">${escapeHTML(i.time||'')}</div>
+      </div>
+    `).join('')}
+  `).join('') || '<div class="card">No schedule available</div>';
+
+  const filterBar = `
+    <div class="filter-row">
+      <span class='muted'>Filter:</span>
+      <button class="btn ${filter==='all'?'primary':''}" data-filter="all">All</button>
+      <button class="btn ${filter==='class'?'primary':''}" data-filter="class">Only Class Time</button>
+      <button class="btn ${filter==='assignment'?'primary':''}" data-filter="assignment">Only Assignments</button>
+    </div>
+  `;
+  const inner = `${pageHeaderHTML_Student(c,'timeline')}${filterBar}<div>${calendarHTML}</div>`;
+  mount(shell(inner)); updateSidebar(); bindTabs();
+  qsa('[data-filter]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.ui.timelineFilter = b.getAttribute('data-filter');
+      renderClassTimeline();
+    });
+  });
+}
+
+/************** Study Insights (placeholder) **************/
+function renderStudyInsights(){ renderSubpage('insights', ()=>`
+  <div class='grid cols-3'>
+    <div class='card'><b>My Engagement</b><div class='muted' style='margin-top:6px'>Participated in 2 discussions and submitted 1 assignment this week.</div></div>
+    <div class='card'><b>Assignment Accuracy</b><div class='muted' style='margin-top:6px'>Average accuracy of objective questions: 86%.</div></div>
+    <div class='card'><b>Study Time</b><div class='muted' style='margin-top:6px'>Total study time in the last 7 days: 6.2 hours.</div></div>
+  </div>`); }
+
+function renderSubpage(activeKey, bodyHTMLBuilder){
+  const cid = sessionStorage.getItem('currCourse') || '';
+  const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
+  const inner = `${pageHeaderHTML_Student(c,activeKey)}${bodyHTMLBuilder(c)}`;
+  mount(shell(inner));
+  updateSidebar();
+  bindTabs();
+  renderBottomDock(cid);
+}
+
+/************** Bottom Q&A chips + Submit flow **************/
+function renderBottomDock(courseId){
+  qs('#bottom-dock')?.remove();
+  const list = state.questions || [];
+  if(list.length === 0) return;
+  const dock = document.createElement('div');
+  dock.id = 'bottom-dock';
+  dock.className = 'bottom-dock';
+  dock.innerHTML = list.map(q => {
+    const sub = state.submissions[q.id];
+    const status = sub ? `<span class="deadline">· Submitted ${escapeHTML(sub.time||'')}</span>` : (q.deadlineISO ? `<span class="deadline">· Due ${fmtDeadline(q.deadlineISO)}</span>` : '');
+    return `<div class="question-chip" onclick="openQuestionModal('${q.id}')">
+      <strong>Q:</strong> <span>${escapeHTML(q.title||'—')}</span>
+      ${status}
+    </div>`;
+  }).join('');
+  document.body.appendChild(dock);
+}
+
+let editingQuestionId = null;
+function openQuestionModal(id=null){
+  editingQuestionId = id;
+  const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
+  const q = (state.questions || []).find(x=>x.id===id) || {};
+  const sub = state.submissions[id];
+  title.textContent = sub ? 'View/Update Submission' : 'Submit Answer';
+  body.innerHTML = `
+    <div class="muted">Question: ${escapeHTML(q.title||'')}</div>
+    <label><div class="muted">My Answer</div><textarea id="ans-text" class="input" rows="5" placeholder="Enter your answer...">${escapeHTML(sub?.text||'')}</textarea></label>
+    <label><div class="muted">Attachment (optional)</div><input id="ans-file" type="file" class="input"/></label>
+    ${sub ? `<div class="muted">Submitted at: ${escapeHTML(sub.time||'')}</div>`:''}
+  `;
+  save.textContent = sub ? 'Update Submission' : 'Submit';
+  save.onclick = saveSubmission;
+  qs('#modal-mask').style.display='flex';
+}
+function closeModal(ev){
+  if(ev && ev.target && ev.target.id && ev.target.id !== 'modal-mask') return;
+  const mask = qs('#modal-mask'); if(mask) mask.style.display = 'none';
+  editingQuestionId = null;
+}
+function saveSubmission(){
+  const id = editingQuestionId;
+  const txt = qs('#ans-text')?.value.trim();
+  const f = qs('#ans-file')?.files?.[0];
+  if(!txt && !f){ alert('Please enter an answer or attach a file'); return; }
+  let files = [];
+  if(f){ files.push({ name:f.name, url:URL.createObjectURL(f) }); }
+  state.submissions[id] = { text:txt||'', files, time:fmtDeadline(new Date().toISOString()) };
+  closeModal();
+  renderBottomDock(sessionStorage.getItem('currCourse')||'');
+  alert('Submitted (local simulation)');
+}
+
+/************** Hall (read-only) **************/
+function renderHall(){
+  // Compose from enrolled courses as a read-only list
+  const showcase = (state.courses||[]).map(c=>({
+    id:c.id, title:c.title, teacher:c.teacher, students:c.students, desc:'Public info (demo)', public:true
+  }));
+  const card = c=>`
+    <div class='card'>
+      <div style='display:flex;gap:10px;align-items:center'>
+        <img src='https://picsum.photos/seed/${encodeURIComponent(c.id)}/120/80' style='width:120px;height:80px;border-radius:8px;object-fit:cover' alt='thumb'/>
+        <div style='flex:1'>
+          <b>${escapeHTML(c.title||c.id||'Untitled Course')}</b>
+          <div class='muted' style='margin-top:6px'>${escapeHTML(c.desc || 'No description')}</div>
+          <div style='margin-top:8px;display:flex;gap:8px;align-items:center'>
+            <button class='btn' onclick="openClassroom('${c.id}')">Enter</button>
+            <span class='muted'>${escapeHTML(c.teacher||'Teacher')} · ${c.students||0} students</span>
+            <span style='margin-left:auto' class='status on'>Public</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  const html = `
+    <h2>Course Hall (Read-Only)</h2>
+    <div class='grid cols-2' style='margin-top:12px'>
+      ${(showcase.map(card).join('')) || '<div class="card">No courses available</div>'}
+    </div>
+  `;
+  mount(shell(html)); updateSidebar();
+}
+
+/************** Meeting (placeholder) **************/
+function renderMeeting(){
+  const html = `
+    <div class='card'>
+      <h3>Video Meeting (Placeholder)</h3>
+      <p class='muted'>Zoom / WebRTC API integration will be added here in the future.</p>
+      <div style='margin-top:12px;display:flex;gap:8px'>
+        <button class='btn primary' onclick="alert('Placeholder: would open video meeting (future feature)')">Join Meeting (Placeholder)</button>
+        <button class='btn' onclick="alert('Placeholder: microphone/camera settings (future feature)')">Device Settings</button>
+      </div>
+    </div>`;
+  mount(shell(html)); updateSidebar();
+}
+
+/************** Routing **************/
+function route(){
+  removeFloatingUI();
+  let h = location.hash || '';
+  if(!h){
+    const target = state.user ? '#/student/courses' : '#/login';
+    location.hash = target;
+    (routes[target] || renderLogin)();
+    setTimeout(updateSidebar, 0);
+    return;
+  }
+  (routes[h] || renderLogin)();
+  setTimeout(updateSidebar, 0);
+}
+
+/************** Copy code (fallback) **************/
+async function copyJoinCode(){
+  const cid = sessionStorage.getItem('currCourse');
+  const code = cid ? `JOIN-${cid}` : 'JOIN-CODE';
+  try{
+    if(navigator.clipboard?.writeText){ await navigator.clipboard.writeText(code); alert('Join code copied: ' + code); }
+    else{ prompt('Copy this join code:', code); }
+  }catch(e){ alert('Copy failed: ' + (e?.message||e)); }
+}
+
+/************** Boot **************/
+document.addEventListener('DOMContentLoaded', ()=>{
+  window.addEventListener('hashchange', route);
+  route();
+});
+</script>
+</body>
+</html>

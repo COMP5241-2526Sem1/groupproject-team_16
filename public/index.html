@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PolyClass 教师端原型</title>
+  <title>PolyClass Teacher Prototype</title>
   <style>
     :root{
       --bg:#f5f9ff; --panel:#e6f0ff; --card:#ffffff; --border:#bcd2f0; --muted:#557aa3;
@@ -55,7 +55,7 @@
     .modal header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .modal footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 
-    /* 导航样式 */
+  /* Navigation styles */
     .nav-title{padding:12px 16px;font-weight:800;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-radius:10px}
     .nav-title:hover{background:var(--panel)}
     .nav-group{margin-left:8px}
@@ -65,7 +65,7 @@
     .course-parent{display:flex;justify-content:space-between;align-items:center}
     .course-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    /* 讨论页样式 */
+  /* Discussion page styles */
     .segmented{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
     .segmented button{border:0;background:#fff;padding:8px 12px}
     .segmented button.active{background:var(--primary-2);color:#fff}
@@ -77,12 +77,12 @@
     .msg.me .bubble{background:#e8f0ff}
     .chat-input{display:flex;gap:8px;padding:8px;border-top:1px solid var(--border);background:#fff}
 
-    /* 时间表 */
+  /* Timetable */
     .filter-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
     .calendar-day{font-weight:700;margin:8px 0 4px}
     .calendar-item{padding:10px;border:1px solid var(--border);border-radius:10px;margin:6px 0;background:#fff}
 
-    /* 大厅管理表格 + 错误条 */
+  /* Hall management table + error bar */
     .table{width:100%;border-collapse:collapse}
     .table th,.table td{padding:8px;border-bottom:1px solid var(--border);text-align:left}
     #error-bar{position:fixed;left:0;right:0;bottom:0;background:#dc2626;color:#fff;padding:8px 12px;display:none;z-index:9999}
@@ -100,46 +100,46 @@
 <body>
   <main id="app"></main>
 
-  <!-- 通用弹窗 -->
+  <!-- Common Modal -->
   <div id="modal-mask" class="modal-mask" onclick="closeModal(event)">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="event.stopPropagation()">
       <header>
-        <h3 id="modal-title" style="margin:0">新建</h3>
-        <button class="btn" aria-label="关闭弹窗" onclick="closeModal()">✖</button>
+  <h3 id="modal-title" style="margin:0">New</h3>
+  <button class="btn" aria-label="Close modal" onclick="closeModal()">✖</button>
       </header>
       <div id="modal-body" style="display:flex;flex-direction:column;gap:10px"></div>
       <footer id="modal-footer">
-        <button class="btn" onclick="closeModal()">取消</button>
-        <button class="btn primary" id="modal-save">保存</button>
+  <button class="btn" onclick="closeModal()">Cancel</button>
+  <button class="btn primary" id="modal-save">Save</button>
       </footer>
     </div>
   </div>
 
-  <!-- 错误提示条 -->
+  <!-- Error Bar -->
   <div id="error-bar"><span id="error-text"></span><span class="close" onclick="this.parentNode.style.display='none'">×</span></div>
 
   <script>
-  /************** 错误护栏 **************/
+  /************** Error Overlay **************/
   (function setupErrorOverlay(){
     const show = (msg)=>{
       const bar = document.getElementById('error-bar');
       const txt = document.getElementById('error-text');
-      if(bar && txt){ txt.textContent = String(msg || '发生未知错误'); bar.style.display = 'block'; }
+  if(bar && txt){ txt.textContent = String(msg || 'Unknown error occurred'); bar.style.display = 'block'; }
       console.error('[PolyClass Error]', msg);
     };
     window.addEventListener('error', (e)=> show(e?.error?.message || e?.message || e));
     window.addEventListener('unhandledrejection', (e)=> show(e?.reason?.message || e?.reason || e));
   })();
 
-  /************** 基础工具/状态 **************/
+  /************** Basic Utilities/State **************/
   const API_BASE = '';
   const TABS = [
-    { key:'classroom', label:'进入课堂', hash:'#/teacher/classroom' },
-    { key:'ai',        label:'AI 助手',  hash:'#/teacher/classroom/ai' },
-    { key:'tools',     label:'小组件',    hash:'#/teacher/classroom/tools' },
-    { key:'discuss',   label:'讨论区',    hash:'#/teacher/classroom/discuss' },
-    { key:'timeline',  label:'时间表',    hash:'#/teacher/classroom/timeline' },
-    { key:'insights',  label:'信息展示',  hash:'#/teacher/classroom/insights' },
+    { key:'classroom', label:'Enter Classroom', hash:'#/teacher/classroom' },
+    { key:'ai',        label:'AI Assistant',  hash:'#/teacher/classroom/ai' },
+    { key:'tools',     label:'Widgets',    hash:'#/teacher/classroom/tools' },
+    { key:'discuss',   label:'Discussion',    hash:'#/teacher/classroom/discuss' },
+    { key:'timeline',  label:'Timetable',    hash:'#/teacher/classroom/timeline' },
+    { key:'insights',  label:'Insights',  hash:'#/teacher/classroom/insights' },
   ];
   const state = {
     user: null,
@@ -148,8 +148,8 @@
     questions: [],
     joinCode: '',
     showcase: [
-      { id:'show-001', title:'现代诗歌赏析', teacher:'王老师', students:120, public:true, desc:'面向所有人开放的美学课' },
-      { id:'show-002', title:'Python 入门', teacher:'李老师', students:230, public:true, desc:'基础语法与项目实践' }
+      { id:'show-001', title:'Modern Poetry Appreciation', teacher:'Mr. Wang', students:120, public:true, desc:'Aesthetics class open to everyone' },
+      { id:'show-002', title:'Python Introduction', teacher:'Ms. Li', students:230, public:true, desc:'Basic syntax and project practice' }
     ],
     sessions: {},
     discussions: {},
@@ -226,11 +226,11 @@
     if(mask) mask.style.display = 'none';
   }
 
-  /************** 侧栏 **************/
+  /************** Sidebar **************/
   function groupCourses(courses){
     const map = {};
     (courses||[]).forEach(c=>{
-      const g = (c.group || c.category || '其他').toString();
+  const g = (c.group || c.category || 'Other').toString();
       if(!map[g]) map[g] = [];
       map[g].push(c);
     });
@@ -248,17 +248,17 @@
   function buildMyCourses(groups){
     const expanded = state.ui.myCoursesExpanded;
     const groupKeys = Object.keys(groups || {}).sort();
-    // 如果没有任何课程，显示占位
+  // If there are no courses, show placeholder
     if(groupKeys.length === 0){
       return `
       <div class="nav-title" id="my-courses-title" role="button" tabindex="0" aria-expanded="${expanded}">
-        <span>我的课程</span><span class="caret ${expanded?'expanded':''}">${expanded?'▼':'▶'}</span>
+  <span>My Courses</span><span class="caret ${expanded?'expanded':''}">${expanded?'▼':'▶'}</span>
       </div>
       <div id="my-courses-box" style="display:${expanded?'block':'none'}">
-        <div class="muted" style="padding:8px 12px">暂无课程</div>
+  <div class="muted" style="padding:8px 12px">No courses</div>
       </div>`;
     }
-    // 构建每个分组（例如 计算机、语言学）作为我的课程的子分组
+  // Build each group (e.g., Computer Science, Linguistics) as subgroups of My Courses
     const groupsHTML = groupKeys.map(k=>{
       const gid = `group-${k}`;
       if(typeof state.ui.groupExpanded[gid] === 'undefined') state.ui.groupExpanded[gid] = true;
@@ -274,7 +274,7 @@
           </div>
           ${courseSubnavHTML(c.id)}
         `;
-      }).join('') : `<div class="muted" style="padding:8px 12px">暂无课程</div>`;
+  }).join('') : `<div class="muted" style="padding:8px 12px">No courses</div>`;
 
       return `
         <div class="nav-group">
@@ -291,7 +291,7 @@
 
     return `
       <div class="nav-title" id="my-courses-title" role="button" tabindex="0" aria-expanded="${expanded}">
-        <span>我的课程</span><span class="caret ${expanded?'expanded':''}">${expanded?'▼':'▶'}</span>
+  <span>My Courses</span><span class="caret ${expanded?'expanded':''}">${expanded?'▼':'▶'}</span>
       </div>
       <div id="my-courses-box" style="display:${expanded?'block':'none'}">
         ${groupsHTML}
@@ -301,7 +301,7 @@
   function buildOtherGroups(groups){
     let html = '';
     Object.keys(groups).sort().forEach(k=>{
-      if(k === '其他') return;
+  if(k === 'Other') return;
       const gid = `group-${k}`;
       if(typeof state.ui.groupExpanded[gid] === 'undefined') state.ui.groupExpanded[gid] = true;
       const expanded = state.ui.groupExpanded[gid];
@@ -331,8 +331,8 @@
   }
   function buildPrefixLinks(){
     return `
-      <a class="nav-item" href="#/teacher/hall">🏛️ 课程大厅</a>
-      <a class="nav-item" href="#/teacher/meeting">🎥 视频会议</a>
+  <a class="nav-item" href="#/teacher/hall">🏛️ Course Hall</a>
+  <a class="nav-item" href="#/teacher/meeting">🎥 Video Meeting</a>
     `;
   }
   function renderSidebar(){
@@ -357,13 +357,14 @@
       el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); }});
     });
     qsa('.course-sub-link', nav).forEach(a=>{
-      a.addEventListener('click', (ev)=>{
-        // 允许原生导航，不阻止默认
+    a.addEventListener('click', (ev)=>{
+  // Allow native navigation, do not prevent default
         const cid = a.getAttribute('data-course-id');
         const href = a.getAttribute('data-href');
         sessionStorage.setItem('currCourse', cid);
-        // 立即高亮，防闪烁
-        setTimeout(highlightActiveNav, 0);
+  // Highlight immediately to prevent flicker
+    setTimeout(highlightActiveNav, 0);
+  // Highlight immediately to prevent flicker
       });
     });
     qsa('[data-group]', nav).forEach(el=>{
@@ -391,7 +392,7 @@
     }
   }
 
-  /************** 页面框架 **************/
+  /************** Page Framework **************/
   function shell(content){
     return `
     <header class='topbar'>
@@ -401,35 +402,35 @@
       </div>
       <div class='top-actions'>
         <span>${state.user?.email||''}</span>
-        <div class='avatar' onclick="goto('#/teacher/profile')" title='查看个人信息'></div>
+        <div class='avatar' onclick="goto('#/teacher/profile')" title='View Personal Info'></div>
       </div>
     </header>
     <div class='layout'>
-      <aside class='sidebar'><nav class='nav' aria-label="侧边导航"></nav></aside>
+      <aside class='sidebar'><nav class='nav' aria-label="Side Navigation"></nav></aside>
       <section class='content'>${content}</section>
     </div>`;
   }
   function updateSidebar(){ renderSidebar(); }
 
-  /************** 登录与基础页 **************/
+  /************** Login and Base Pages **************/
   function renderLogin(){
     mount(`
       <div class='center'>
         <div class='card login-panel'>
-          <h2>登录 PolyClass</h2>
-          <p class='muted'>请选择角色登录（当前仅开放教师端）。</p>
+          <h2>Login to PolyClass</h2>
+          <p class='muted'>Please select a role to login (currently only teacher portal is available).</p>
           <div class='grid cols-3' style='margin:12px 0'>
-            <div class='role' data-role='teacher' tabindex="0" role="button" aria-pressed="true">教师</div>
-            <div class='role' data-role='student' tabindex="0" role="button">学生</div>
-            <div class='role' data-role='admin' tabindex="0" role="button">管理员</div>
+            <div class='role' data-role='teacher' tabindex="0" role="button" aria-pressed="true">Teacher</div>
+            <div class='role' data-role='student' tabindex="0" role="button">Student</div>
+            <div class='role' data-role='admin' tabindex="0" role="button">Admin</div>
           </div>
           <div style='display:flex;gap:10px;'>
-            <input class='input' id='email' placeholder='邮箱' value='teacher@polyclass.edu' />
-            <input class='input' id='pwd' placeholder='密码' type='password' value='123456' />
+            <input class='input' id='email' placeholder='Email' value='teacher@polyclass.edu' />
+            <input class='input' id='pwd' placeholder='Password' type='password' value='123456' />
           </div>
           <div style='margin-top:16px;display:flex;justify-content:space-between;align-items:center'>
-            <span class='muted'>轻蓝主题 · Teams风格</span>
-            <button class='btn primary' id='login-btn'>登录</button>
+            <span class='muted'>Light Blue Theme · Teams Style</span>
+            <button class='btn primary' id='login-btn'>Login</button>
           </div>
         </div>
       </div>
@@ -444,33 +445,39 @@
     qs('#login-btn')?.addEventListener('click', async ()=>{
       const email = qs('#email')?.value.trim();
       const password = qs('#pwd')?.value || '';
-      if(!email || !password){ alert('请输入邮箱与密码'); return; }
-      // 模拟登录
-      state.user = {email, role:selectedRole, name:'Teacher'};
+      if(!email || !password){ alert('Please enter email and password'); return; }
+      // Simulate login
+      state.user = { email, role: selectedRole, name: selectedRole === 'student' ? 'Student' : 'Teacher' };
+      // If student, open the standalone student client page; otherwise go to teacher shell
+      if(selectedRole === 'student'){
+        // navigate to the student.html file in the same public folder
+        window.location.href = 'student.html';
+        return;
+      }
       goto('#/teacher');
     });
   }
   function renderTeacherShell(){ goto('#/teacher/courses'); }
 
-  // 教师个人资料页（简单实现，避免未定义错误）
+  // Teacher profile page (simple implementation to avoid undefined errors)
   function renderTeacherProfile(){
-    const user = state.user || { name:'教师', email:'' };
+    const user = state.user || { name:'Teacher', email:'' };
     const html = `
-      <h2>个人资料</h2>
+      <h2>Personal Profile</h2>
       <div class='card' style='max-width:560px'>
         <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px'>
           <div class='avatar' style='width:64px;height:64px;border-radius:12px'></div>
           <div>
-            <div style='font-weight:700'>${escapeHTML(user.name||'教师')}</div>
+            <div style='font-weight:700'>${escapeHTML(user.name||'Teacher')}</div>
             <div class='muted'>${escapeHTML(user.email||'')}</div>
           </div>
         </div>
         <div style='margin-top:12px'>
-          <div class='muted'>角色</div>
+          <div class='muted'>Role</div>
           <div style='margin:6px 0 12px'>${escapeHTML(user.role||'teacher')}</div>
           <div style='display:flex;gap:8px'>
-            <button class='btn' onclick="goto('#/teacher/courses')">返回课程</button>
-            <button class='btn primary' onclick='(function(){ state.user=null; sessionStorage.removeItem("currCourse"); goto("#/login"); })()'>登出</button>
+            <button class='btn' onclick="goto('#/teacher/courses')">Back to Courses</button>
+            <button class='btn primary' onclick='(function(){ state.user=null; sessionStorage.removeItem("currCourse"); goto("#/login"); })()'>Logout</button>
           </div>
         </div>
       </div>
@@ -490,54 +497,54 @@
     return `
       <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px'>
         <div>
-          <small class='muted'>课堂 / ${escapeHTML(course.id||'—')}</small>
-          <h2 style='margin:4px 0 0 0'>${escapeHTML(course.title||course.id||'未命名课程')}</h2>
+          <small class='muted'>Course / ${escapeHTML(course.id||'—')}</small>
+          <h2 style='margin:4px 0 0 0'>${escapeHTML(course.title||course.id||'Unnamed Course')}</h2>
         </div>
         <div style='display:flex;gap:8px;align-items:center'>
           <label class='btn ghost' style='gap:6px'>
             <input id="share-toggle" type="checkbox" ${shared?'checked':''} style="accent-color:#3a82f6;transform:scale(1.1)"/>
-            分享至课程大厅
+            Share to Course Hall
           </label>
-          <button class='btn' onclick="goto('#/teacher/courses')">返回课程列表</button>
-          <button class='btn' onclick="copyJoinCode()">复制加入码</button>
+          <button class='btn' onclick="goto('#/teacher/courses')">Back to Course List</button>
+          <button class='btn' onclick="copyJoinCode()">Copy Join Code</button>
         </div>
       </div>
       ${tabsHTML(activeKey)}
     `;
   }
 
-  /************** 课程列表 **************/
+  /************** Course List **************/
   async function renderCourses(){
-    // 初始化课程（仅首次）
+    // Initialize courses (first time only)
     if(state.courses.length===0){
       state.courses = [
-        {id:'CS101', title:'计算机基础', students:45, updated:'10-09', public:false, group:'计算机'},
-        {id:'LING201', title:'语义学导论', students:60, updated:'10-08', public:true,  group:'语言学'},
-        {id:'AI500', title:'AI 应用实践', students:38, updated:'10-07', public:false, group:'计算机'}
+        {id:'CS101', title:'Computer Fundamentals', students:45, updated:'10-09', public:false, group:'Computer Science'},
+        {id:'LING201', title:'Introduction to Semantics', students:60, updated:'10-08', public:true,  group:'Linguistics'},
+        {id:'AI500', title:'AI Application Practice', students:38, updated:'10-07', public:false, group:'Computer Science'}
       ];
-      state.sessions['CS101'] = [{ time:'2025-10-12 10:00', tag:'上课', text:'第4讲：C 基础' }];
-      state.sessions['LING201'] = [{ time:'2025-10-13 09:00', tag:'上课', text:'第3讲：语义角色' }];
-      state.sessions['AI500'] = [{ time:'2025-10-12 14:00', tag:'上课', text:'第2讲：数据清洗' }];
+      state.sessions['CS101'] = [{ time:'2025-10-12 10:00', tag:'Class', text:'Lecture 4: C Basics' }];
+      state.sessions['LING201'] = [{ time:'2025-10-13 09:00', tag:'Class', text:'Lecture 3: Semantic Roles' }];
+      state.sessions['AI500'] = [{ time:'2025-10-12 14:00', tag:'Class', text:'Lecture 2: Data Cleaning' }];
     }
     const cards = (state.courses||[]).map(c=>`
       <div class='card'>
-        <b>${escapeHTML(c.title||c.id||'未命名课程')}</b>
-        <div class='muted'>编号：${escapeHTML(c.id||'-')} · 学生 ${c.students ?? 0} · 更新 ${escapeHTML(c.updated||'-')}</div>
+        <b>${escapeHTML(c.title||c.id||'Unnamed Course')}</b>
+        <div class='muted'>ID: ${escapeHTML(c.id||'-')} · Students ${c.students ?? 0} · Updated ${escapeHTML(c.updated||'-')}</div>
         <div style='margin-top:8px;display:flex;gap:8px;align-items:center'>
-          <button class='btn primary' onclick="openClassroom('${c.id}')">进入课堂</button>
-          <span class='status ${c.public? 'on':'off'}'>${c.public? '公开':'私密'}</span>
+          <button class='btn primary' onclick="openClassroom('${c.id}')">Enter Classroom</button>
+          <span class='status ${c.public? 'on':'off'}'>${c.public? 'Public':'Private'}</span>
         </div>
       </div>`).join('');
     const html = `
-      <h2>课程</h2>
+      <h2>Courses</h2>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-        <div class="muted">管理/浏览你的课程</div>
+        <div class="muted">Manage/Browse your courses</div>
         <div style="display:flex; gap:8px">
-          <button class="btn">➕ 加入课程</button>
-          <button class="btn primary">➕ 新建课程</button>
+          <button class="btn">➕ Join Course</button>
+          <button class="btn primary">➕ Create Course</button>
         </div>
       </div>
-      <div class='grid cols-2'>${cards || '<div class="card">暂无课程</div>'}</div>`;
+      <div class='grid cols-2'>${cards || '<div class="card">No courses</div>'}</div>`;
     mount(shell(html));
     updateSidebar();
   }
@@ -548,14 +555,14 @@
     if(h.startsWith('#/teacher/classroom')) goto(h); else goto('#/teacher/classroom');
   }
 
-  /************** 课堂父页 **************/
+  /************** Classroom Parent Page **************/
   async function renderClassroom(){
     let cid = sessionStorage.getItem('currCourse');
     if(!cid && state.courses.length){ cid = state.courses[0]?.id; sessionStorage.setItem('currCourse', cid); }
     const courseId = cid || '';
     const c = (state.courses.find(x=>x.id===courseId) || { id: courseId, title: courseId });
 
-    // 示例学生/问题
+    // Example students/questions
     if(!state.students.length){
       state.students = [
         {id:'2025001', name:'Alice', status:'online', score:92, submissions:3},
@@ -564,8 +571,8 @@
     }
     if(!state.questions.length){
       state.questions = [
-        {id:'q1', title:'课堂要点小结', deadlineISO:'2025-10-12T22:00'},
-        {id:'q2', title:'第3讲随堂练习', deadlineISO:'2025-10-14T18:00'}
+        {id:'q1', title:'Class Key Points Summary', deadlineISO:'2025-10-12T22:00'},
+        {id:'q2', title:'Lecture 3 In-class Exercise', deadlineISO:'2025-10-14T18:00'}
       ];
     }
 
@@ -573,45 +580,45 @@
       <tr>
         <td>${escapeHTML(s.id||'-')}</td>
         <td>${escapeHTML(s.name||'-')}</td>
-        <td><span class='status ${s.status==='online'?'on':'off'}'>${s.status==='online'?'在线':'离线'}</span></td>
+        <td><span class='status ${s.status==='online'?'on':'off'}'>${s.status==='online'?'Online':'Offline'}</span></td>
         <td>${s.score ?? '-'}</td>
         <td>${s.submissions ?? 0}</td>
-        <td><button class='btn'>详情</button></td>
+        <td><button class='btn'>Details</button></td>
       </tr>`).join('');
 
     const inner = `
       ${pageHeaderHTML(c,'classroom')}
       <div class="classroom-grid">
         <div class='card'>
-          <h3 style='margin-top:0'>学生概览</h3>
+          <h3 style='margin-top:0'>Student Overview</h3>
           <table>
-            <thead><tr><th>学号</th><th>姓名</th><th>状态</th><th>平均分</th><th>提交次数</th><th>操作</th></tr></thead>
-            <tbody>${studentRows || '<tr><td colspan="6" class="muted">暂无学生</td></tr>'}</tbody>
+            <thead><tr><th>Student ID</th><th>Name</th><th>Status</th><th>Average Score</th><th>Submissions</th><th>Actions</th></tr></thead>
+            <tbody>${studentRows || '<tr><td colspan="6" class="muted">No students</td></tr>'}</tbody>
           </table>
         </div>
         <aside class="activity-aside">
           <div class="mini-card">
-            <div class="mini-title">🗳️ 投票</div>
-            <div class="muted" style="margin-bottom:8px">单选 / 多选</div>
+            <div class="mini-title">🗳️ Polls</div>
+            <div class="muted" style="margin-bottom:8px">Single / Multiple Choice</div>
             <div class="mini-actions">
-              <button class="btn primary" onclick="alert('投票创建暂未实现')">新建投票</button>
-              <button class="btn" onclick="alert('投票历史暂未实现')">历史记录</button>
+              <button class="btn primary" onclick="alert('Poll creation not implemented yet')">Create Poll</button>
+              <button class="btn" onclick="alert('Poll history not implemented yet')">History</button>
             </div>
           </div>
           <div class="mini-card">
-            <div class="mini-title">📝 问答</div>
-            <div class="muted" style="margin-bottom:8px">简答 / 词云</div>
+            <div class="mini-title">📝 Q&A</div>
+            <div class="muted" style="margin-bottom:8px">Short Answer / Word Cloud</div>
             <div class="mini-actions">
-              <button class="btn primary" onclick="openQuestionModal()">新建问答</button>
-              <button class="btn" onclick="alert('问答历史暂未实现')">历史记录</button>
+              <button class="btn primary" onclick="openQuestionModal()">New Q&A</button>
+              <button class="btn" onclick="alert('Q&A history not implemented yet')">History</button>
             </div>
           </div>
           <div class="mini-card">
-            <div class="mini-title">🎮 小游戏</div>
-            <div class="muted" style="margin-bottom:8px">抢答 / 排行榜</div>
+            <div class="mini-title">🎮 Mini Games</div>
+            <div class="muted" style="margin-bottom:8px">Quick Answer / Leaderboard</div>
             <div class="mini-actions">
-              <button class="btn primary" onclick="alert('小游戏创建暂未实现')">创建游戏</button>
-              <button class="btn" onclick="alert('小游戏历史暂未实现')">历史记录</button>
+              <button class="btn primary" onclick="alert('Mini game creation not implemented yet')">Create Game</button>
+              <button class="btn" onclick="alert('Mini game history not implemented yet')">History</button>
             </div>
           </div>
         </aside>
@@ -630,7 +637,7 @@
     });
   }
 
-  /************** 子页：AI / 工具 / 信息 **************/
+  /************** Subpages: AI / Tools / Info **************/
   function renderSubpage(activeKey, bodyHTMLBuilder){
     const cid = sessionStorage.getItem('currCourse') || '';
     const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
@@ -642,75 +649,75 @@
   function renderClassAI(){ renderSubpage('ai', ()=>`
     <div class='grid cols-2'>
       <div class='card'>
-        <h3 style='margin-top:0'>🧭 自动备课</h3>
-        <div class='muted'>根据教学目标与材料快速生成教学大纲、知识点与活动建议。</div>
+        <h3 style='margin-top:0'>🧭 Auto Lesson Planning</h3>
+        <div class='muted'>Quickly generate teaching outlines, key points, and activity suggestions based on teaching objectives and materials.</div>
         <div style='display:flex;gap:8px;margin-top:12px'>
-          <input class='input' id='plan-topic' placeholder='输入本节课主题/材料链接'/>
-          <button class='btn primary' onclick="alert('示例：已生成教案草稿（接口留空，可接后端）')">生成教案</button>
+          <input class='input' id='plan-topic' placeholder='Enter lesson topic/material link'/>
+          <button class='btn primary' onclick="alert('Example: Lesson plan draft generated (API empty, can connect to backend)')">Generate Plan</button>
         </div>
       </div>
       <div class='card'>
-        <h3 style='margin-top:0'>✏️ 自动产生题目</h3>
-        <div class='muted'>从教材/课件抽取选择题、简答题，支持难度与题量设置。</div>
+        <h3 style='margin-top:0'>✏️ Auto Question Generation</h3>
+        <div class='muted'>Extract multiple choice and short answer questions from textbooks/slides, with difficulty and quantity settings.</div>
         <div style='display:flex;gap:8px;margin-top:12px;flex-wrap:wrap'>
-          <input class='input' style='max-width:220px' id='q-count' placeholder='题量（如 10）'/>
+          <input class='input' style='max-width:220px' id='q-count' placeholder='Question count (e.g. 10)'/>
           <select class='input' style='max-width:220px' id='q-level'>
-            <option value='easy'>容易</option><option value='mid'>中等</option><option value='hard'>困难</option>
+            <option value='easy'>Easy</option><option value='mid'>Medium</option><option value='hard'>Hard</option>
           </select>
-          <button class='btn primary' onclick="alert('示例：已生成题目（接口留空，可接后端）')">生成题目</button>
+          <button class='btn primary' onclick="alert('Example: Questions generated (API empty, can connect to backend)')">Generate Questions</button>
         </div>
       </div>
-      <div class='card'><h3 style='margin-top:0'>🧾 总结课程信息</h3><div class='muted'>自动汇总本节重点、常见错误与改进建议。</div><button class='btn primary' style='margin-top:8px' onclick="alert('示例：已生成课程总结')">生成总结</button></div>
-      <div class='card'><h3 style='margin-top:0'>🔁 一键发布</h3><div class='muted'>将教案/题目/总结推送到讨论区或问答模块。</div><button class='btn' style='margin-top:8px' onclick="alert('示例：已推送到讨论区')">推送到讨论区</button></div>
+      <div class='card'><h3 style='margin-top:0'>🧾 Summarize Course Info</h3><div class='muted'>Automatically summarize key points, common errors, and improvement suggestions.</div><button class='btn primary' style='margin-top:8px' onclick="alert('Example: Course summary generated')">Generate Summary</button></div>
+      <div class='card'><h3 style='margin-top:0'>🔁 One-Click Publish</h3><div class='muted'>Push lesson plans/questions/summaries to discussion or Q&A module.</div><button class='btn' style='margin-top:8px' onclick="alert('Example: Pushed to discussion area')">Push to Discussion</button></div>
     </div>`); }
 
   function renderCourseTools(){ renderSubpage('tools', ()=>`
     <div class='grid cols-2'>
       <div class='card'>
-        <h3 style='margin-top:0'>📢 发布投票</h3>
-        <div class='muted'>快速创建单/多选投票并推送到实时讨论区。</div>
-        <button class='btn primary' onclick="alert('占位：发布投票')">发布投票</button>
+        <h3 style='margin-top:0'>📢 Create Poll</h3>
+        <div class='muted'>Quick create single/multiple choice polls and push to real-time discussion.</div>
+        <button class='btn primary' onclick="alert('Placeholder: Create Poll')">Create Poll</button>
       </div>
       <div class='card'>
-        <h3 style='margin-top:0'>📘 发布作业</h3>
-        <div class='muted'>布置作业并设定截止时间，自动进入时间表-作业视图。</div>
-        <button class='btn primary' onclick="quickCreateAssignment()">发布作业</button>
+        <h3 style='margin-top:0'>📘 Assign Homework</h3>
+        <div class='muted'>Set homework with deadline, automatically enters schedule-homework view.</div>
+        <button class='btn primary' onclick="quickCreateAssignment()">Assign Homework</button>
       </div>
       <div class='card'>
-        <h3 style='margin-top:0'>🧪 发布 Quiz</h3>
-        <div class='muted'>创建小测验，支持客观题自动判分。</div>
-        <button class='btn primary' onclick="alert('占位：发布 Quiz')">发布 Quiz</button>
+        <h3 style='margin-top:0'>🧪 Create Quiz</h3>
+        <div class='muted'>Create quiz with automatic grading for objective questions.</div>
+        <button class='btn primary' onclick="alert('Placeholder: Create Quiz')">Create Quiz</button>
       </div>
       <div class='card'>
-        <h3 style='margin-top:0'>❓ 发布问答</h3>
-        <div class='muted'>快速创建问答话题，自动出现在底部问答栏。</div>
-        <button class='btn primary' onclick="openQuestionModal()">发布问答</button>
+        <h3 style='margin-top:0'>❓ Create Q&A</h3>
+        <div class='muted'>Quickly create Q&A topics, automatically appears in bottom Q&A bar.</div>
+        <button class='btn primary' onclick="openQuestionModal()">Create Q&A</button>
       </div>
       <div class='card'>
-        <h3 style='margin-top:0'>🧩 多选互动</h3>
-        <div class='muted'>发起多选互动题，实时统计可视化。</div>
-        <button class='btn primary' onclick="alert('占位：多选互动')">发起互动</button>
+        <h3 style='margin-top:0'>🧩 Multiple Choice Activity</h3>
+        <div class='muted'>Start multiple choice interactive questions with real-time statistics visualization.</div>
+        <button class='btn primary' onclick="alert('Placeholder: Start Activity')">Start Activity</button>
       </div>
       <div class='card'>
-        <h3 style='margin-top:0'>🎮 小游戏互动</h3>
-        <div class='muted'>抢答 / 排行榜等课堂小游戏。</div>
-        <button class='btn primary' onclick="alert('占位：小游戏互动')">开始游戏</button>
+        <h3 style='margin-top:0'>🎮 Mini Game Activity</h3>
+        <div class='muted'>Quick answer / leaderboard and other classroom mini games.</div>
+        <button class='btn primary' onclick="alert('Placeholder: Start Game')">Start Game</button>
       </div>
     </div>`); }
   function quickCreateAssignment(){
     const cid = sessionStorage.getItem('currCourse') || '';
-    const ttl = '作业：阅读第4章并完成习题';
+  const ttl = 'Homework: Read Chapter 4 and complete exercises';
     const ddl = new Date(Date.now()+2*24*3600*1000);
     state.questions.push({id:'hw-'+Date.now(), title:ttl, deadlineISO: toLocalDatetimeValue(ddl)});
-    alert('已创建作业，并加入时间表（作业）');
+  alert('Homework created and added to timeline (assignments)');
     goto('#/teacher/classroom/timeline');
     state.ui.timelineFilter = 'assignment';
   }
   function renderCourseInsights(){ renderSubpage('insights', ()=>`
     <div class='grid cols-3'>
-      <div class='card'><b>本周参与度</b></div>
-      <div class='card'><b>平均正确率</b></div>
-      <div class='card'><b>提交分布</b></div>
+      <div class='card'><b>This Week's Engagement</b></div>
+      <div class='card'><b>Average Accuracy</b></div>
+      <div class='card'><b>Submission Distribution</b></div>
     </div>`); }
 
   /************** 讨论区：实时+帖子 **************/
@@ -718,8 +725,8 @@
     if(!state.discussions[cid]){
       state.discussions[cid] = {
         chatMessages:[
-          {id:1, role:'teacher', name:'Teacher', text:'大家好，开始上课啦～', time:fmtDeadline(new Date().toISOString())},
-          {id:2, role:'student', name:'Alice', text:'收到老师', time:fmtDeadline(new Date().toISOString())}
+          {id:1, role:'teacher', name:'Teacher', text:'Hello everyone, class is starting!', time:fmtDeadline(new Date().toISOString())},
+          {id:2, role:'student', name:'Alice', text:'Received, teacher', time:fmtDeadline(new Date().toISOString())}
         ],
         posts:{ teacher:[], student:[] }
       };
@@ -731,7 +738,7 @@
     const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
     const d = ensureDiscussion(cid);
 
-    // 为避免在模板中嵌套反引号引起解析问题，先构建消息列表字符串
+  // To avoid template parsing issues with nested backticks, build the messages list string first
     const messagesHTML = (d.chatMessages || []).map(m => {
       return '<div class="msg ' + (m.role==='teacher' ? 'me' : '') + '">' +
         '<div class="bubble"><b>' + escapeHTML(m.name) + '：</b>' + escapeHTML(m.text) + '<div class="muted" style="font-size:12px">' + escapeHTML(m.time) + '</div></div>' +
@@ -741,16 +748,16 @@
     const chatHTML = `
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <b>实时讨论</b>
-          <div class="muted">类似微信群：所有人可见</div>
+          <b>Live Discussion</b>
+          <div class="muted">Like a group chat: visible to everyone</div>
         </div>
         <div class="chat-box">
           <div id="chat-scroll" class="chat-scroll">
             ${messagesHTML}
           </div>
           <div class="chat-input">
-            <input id="chat-input" class="input" placeholder="输入消息并回车发送"/>
-            <button class="btn primary" id="chat-send">发送</button>
+            <input id="chat-input" class="input" placeholder="Type a message and press Enter to send"/>
+            <button class="btn primary" id="chat-send">Send</button>
           </div>
         </div>
       </div>
@@ -759,32 +766,32 @@
       <div class="card">
         <b>${escapeHTML(p.title)}</b>
         <div class="muted" style="margin-top:6px">${escapeHTML(p.content||'')}</div>
-        <div class="muted" style="margin-top:6px;font-size:12px">发布者：${escapeHTML(p.author||'—')} · ${escapeHTML(p.time||'')}</div>
+  <div class="muted" style="margin-top:6px;font-size:12px">Author: ${escapeHTML(p.author||'—')} · ${escapeHTML(p.time||'')}</div>
       </div>
     `;
     const postsHTML = `
       <div class="grid cols-2">
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <b>帖子讨论（老师发布）</b>
-            <button class="btn" onclick="openPostEditor('teacher')">+ 新建</button>
+            <b>Post Discussions (Teacher Posts)</b>
+            <button class="btn" onclick="openPostEditor('teacher')">+ New</button>
           </div>
-          ${d.posts.teacher.map(postCard).join('') || '<div class="card">暂无老师帖子</div>'}
+          ${d.posts.teacher.map(postCard).join('') || '<div class="card">No teacher posts</div>'}
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <b>帖子讨论（学生发布）</b>
-            <button class="btn" onclick="openPostEditor('student')">+ 新建</button>
+            <b>Post Discussions (Student Posts)</b>
+            <button class="btn" onclick="openPostEditor('student')">+ New</button>
           </div>
-          ${d.posts.student.map(postCard).join('') || '<div class="card">暂无学生帖子</div>'}
+          ${d.posts.student.map(postCard).join('') || '<div class="card">No student posts</div>'}
         </div>
       </div>
     `;
     const inner = `
       ${pageHeaderHTML(c,'discuss')}
       <div class="segmented" style="margin-bottom:12px">
-        <button class="seg-btn active" data-panel="chat">实时讨论</button>
-        <button class="seg-btn" data-panel="posts">帖子讨论</button>
+        <button class="seg-btn active" data-panel="chat">Live Discussion</button>
+        <button class="seg-btn" data-panel="posts">Posts</button>
       </div>
       <div id="panel-chat">${chatHTML}</div>
       <div id="panel-posts" style="display:none">${postsHTML}</div>
@@ -793,7 +800,7 @@
     updateSidebar();
     bindTabs();
 
-    // 切换面板
+  // Switch panels
     qsa('.seg-btn').forEach(b=>{
       b.addEventListener('click', ()=>{
         qsa('.seg-btn').forEach(x=>x.classList.remove('active'));
@@ -803,7 +810,7 @@
         qs('#panel-posts').style.display = (p==='posts')?'block':'none';
       });
     });
-    // 发送聊天
+  // Send chat
     const send = ()=>{
       const ipt = qs('#chat-input'); if(!ipt) return;
       const txt = (ipt.value||'').trim(); if(!txt) return;
@@ -819,14 +826,14 @@
     const cid = sessionStorage.getItem('currCourse') || '';
     const d = ensureDiscussion(cid);
     const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
-    title.textContent = `新建帖子（${role==='teacher'?'老师':'学生'}发布）`;
+    title.textContent = `New Post (${role==='teacher'?'Teacher':'Student'})`;
     body.innerHTML = `
-      <label><div class="muted">标题</div><input id="post-title" class="input" placeholder="请输入标题（必填）"/></label>
-      <label><div class="muted">内容</div><textarea id="post-content" class="input" rows="4" placeholder="请输入内容"></textarea></label>
+      <label><div class="muted">Title</div><input id="post-title" class="input" placeholder="Enter title (required)"/></label>
+      <label><div class="muted">Content</div><textarea id="post-content" class="input" rows="4" placeholder="Enter content"></textarea></label>
     `;
     save.onclick = ()=>{
       const t = qs('#post-title')?.value.trim(); const c = qs('#post-content')?.value.trim();
-      if(!t){ alert('请填写标题'); return; }
+  if(!t){ alert('Please enter a title'); return; }
       const post = { title:t, content:c, time:fmtDeadline(new Date().toISOString()), author: role==='teacher'?'Teacher':'Student' };
       d.posts[role].unshift(post);
       closeModal(); renderClassDiscuss();
@@ -840,7 +847,7 @@
     const c = state.courses.find(x=>x.id===cid) || { title: cid, id: cid };
     const sessions = state.sessions[cid] || [];
     const assignments = (state.questions||[])
-      .filter(q=>q.deadlineISO).map(q=>({ time: (q.deadlineISO||'').replace('T',' '), tag:'作业', text:`${q.title}` }));
+      .filter(q=>q.deadlineISO).map(q=>({ time: (q.deadlineISO||'').replace('T',' '), tag:'Assignment', text:`${q.title}` }));
 
     const filter = state.ui.timelineFilter || 'all';
     const items = [
@@ -850,7 +857,7 @@
 
     const groups = {};
     items.forEach(i=>{
-      const d = (i.time||'').slice(0,10) || '未分组';
+  const d = (i.time||'').slice(0,10) || 'Ungrouped';
       if(!groups[d]) groups[d]=[];
       groups[d].push(i);
     });
@@ -861,19 +868,19 @@
         <div class="calendar-item">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <b>${escapeHTML(i.text||'')}</b>
-            <span class="status ${i.tag==='作业'?'off':'on'}">${escapeHTML(i.tag||'')}</span>
+            <span class="status ${i.tag==='Assignment'?'off':'on'}">${escapeHTML(i.tag||'')}</span>
           </div>
           <div class="muted" style="margin-top:6px">${escapeHTML(i.time||'')}</div>
         </div>
       `).join('')}
-    `).join('') || '<div class="card">暂无日程</div>';
+  `).join('') || '<div class="card">No schedule</div>';
 
     const filterBar = `
       <div class="filter-row">
-        <span class='muted'>筛选：</span>
-        <button class="btn ${filter==='all'?'primary':''}" data-filter="all">全部</button>
-        <button class="btn ${filter==='class'?'primary':''}" data-filter="class">只看课程时间</button>
-        <button class="btn ${filter==='assignment'?'primary':''}" data-filter="assignment">只看作业</button>
+        <span class='muted'>Filter:</span>
+        <button class="btn ${filter==='all'?'primary':''}" data-filter="all">All</button>
+        <button class="btn ${filter==='class'?'primary':''}" data-filter="class">Class Times</button>
+        <button class="btn ${filter==='assignment'?'primary':''}" data-filter="assignment">Assignments</button>
       </div>
     `;
     const inner = `${pageHeaderHTML(c,'timeline')}${filterBar}<div>${calendarHTML}</div>`;
@@ -899,7 +906,7 @@
     dock.innerHTML = list.map(q => `
       <div class="question-chip" onclick="openQuestionModal('${q.id}')">
         <strong>Q:</strong> <span>${escapeHTML(q.title||'—')}</span>
-        ${q.deadlineISO ? `<span class="deadline">· 截止 ${fmtDeadline(q.deadlineISO)}</span>` : ''}
+        ${q.deadlineISO ? `<span class="deadline">· Due ${fmtDeadline(q.deadlineISO)}</span>` : ''}
       </div>`).join('');
     document.body.appendChild(dock);
   }
@@ -909,12 +916,12 @@
   function openQuestionModal(id=null){
     editingQuestionId = id;
     const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
-    title.textContent = id?'编辑问答':'新建问答';
+  title.textContent = id?'Edit Q&A':'New Q&A';
     const q = (state.questions || []).find(x=>x.id===id) || {};
     body.innerHTML = `
-      <label><div class="muted">问题标题</div><input id="q-title" class="input" placeholder="请输入问题标题（必填）" value="${escapeHTML(q.title||'')}" /></label>
-      <label><div class="muted">详细说明</div><textarea id="q-desc" class="input" rows="4" placeholder="可补充背景、答题要求等">${escapeHTML(q.desc||'')}</textarea></label>
-      <label><div class="muted">截止时间</div><input id="q-deadline" class="input" type="datetime-local" value="${q.deadlineISO||toLocalDatetimeValue(new Date(Date.now()+3600000))}"/></label>
+      <label><div class="muted">Question Title</div><input id="q-title" class="input" placeholder="Enter question title (required)" value="${escapeHTML(q.title||'')}" /></label>
+      <label><div class="muted">Details</div><textarea id="q-desc" class="input" rows="4" placeholder="Add background or answer requirements">${escapeHTML(q.desc||'')}</textarea></label>
+  <label><div class="muted">Deadline</div><input id="q-deadline" class="input" type="datetime-local" value="${q.deadlineISO||toLocalDatetimeValue(new Date(Date.now()+3600000))}"/></label>
     `;
     save.onclick = saveQuestion;
     qs('#modal-mask').style.display='flex';
@@ -929,7 +936,7 @@
     const title = qs('#q-title')?.value.trim();
     const desc  = qs('#q-desc')?.value.trim();
     const ddl   = qs('#q-deadline')?.value;
-    if(!title){ alert('请填写问题标题'); return; }
+  if(!title){ alert('Please enter a question title'); return; }
     if(editingQuestionId){
       const idx = state.questions.findIndex(q=>q.id===editingQuestionId);
       const updated = { id:editingQuestionId, title, desc, deadlineISO: ddl||'' };
@@ -950,24 +957,24 @@
         <div style='display:flex;gap:10px;align-items:center'>
           <img src='https://picsum.photos/seed/${encodeURIComponent(c.id)}/120/80' style='width:120px;height:80px;border-radius:8px;object-fit:cover' alt='thumb'/>
           <div style='flex:1'>
-            <b>${escapeHTML(c.title||c.id||'未命名课程')}</b>
-            <div class='muted' style='margin-top:6px'>${escapeHTML(c.desc || '暂无描述')}</div>
+            <b>${escapeHTML(c.title||c.id||'Unnamed Course')}</b>
+            <div class='muted' style='margin-top:6px'>${escapeHTML(c.desc || 'No description')}</div>
             <div style='margin-top:8px;display:flex;gap:8px;align-items:center'>
-              <button class='btn primary' onclick="openClassroom('${c.id}')">查看课程</button>
-              <span class='muted'>${escapeHTML(c.teacher||'教师')} · ${c.students||0} 学生</span>
-              <span style='margin-left:auto' class='status ${c.public? 'on':'off'}'>${c.public? '公开':'展示'}</span>
+              <button class='btn primary' onclick="openClassroom('${c.id}')">View Course</button>
+              <span class='muted'>${escapeHTML(c.teacher||'Teacher')} · ${c.students||0} students</span>
+              <span style='margin-left:auto' class='status ${c.public? 'on':'off'}'>${c.public? 'Public':'Showcase'}</span>
             </div>
           </div>
         </div>
       </div>`;
     const manageTable = `
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <b>展示课程（可编辑，仅作展示）</b>
-          <button class="btn primary" onclick="openShowcaseEditor()">+ 新增展示课程</button>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+          <b>Showcase Courses (editable, for demo only)</b>
+          <button class="btn primary" onclick="openShowcaseEditor()">+ Add Showcase Course</button>
         </div>
         <table class="table" style="margin-top:10px">
-          <thead><tr><th>ID</th><th>标题</th><th>教师</th><th>学生</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>Title</th><th>Teacher</th><th>Students</th><th>Actions</th></tr></thead>
           <tbody>
             ${showcase.map((s,i)=>`
               <tr>
@@ -976,8 +983,8 @@
                 <td>${escapeHTML(s.teacher||'')}</td>
                 <td>${s.students||0}</td>
                 <td>
-                  <button class="btn" onclick="openShowcaseEditor(${i})">编辑</button>
-                  <button class="btn" onclick="deleteShowcase(${i})">删除</button>
+                  <button class="btn" onclick="openShowcaseEditor(${i})">Edit</button>
+                  <button class="btn" onclick="deleteShowcase(${i})">Delete</button>
                 </td>
               </tr>
             `).join('')}
@@ -986,9 +993,9 @@
       </div>
     `;
     const html = `
-      <h2>课程大厅</h2>
+      <h2>Course Hall</h2>
       <div class='grid cols-2' style='margin-top:12px'>
-        ${(livePublics.map(card).join('')) || '<div class="card">暂无公开课程</div>'}
+        ${(livePublics.map(card).join('')) || '<div class="card">No public courses</div>'}
         ${(showcase.map(card).join('')) || ''}
       </div>
       ${manageTable}
@@ -997,21 +1004,21 @@
   }
   function openShowcaseEditor(idx=null){
     const body = qs('#modal-body'), title = qs('#modal-title'), save = qs('#modal-save');
-    const data = (idx!==null)? state.showcase[idx] : {id:'show-'+Date.now(), title:'', teacher:'', students:0, public:true, desc:''};
-    title.textContent = (idx!==null)? '编辑展示课程' : '新增展示课程';
+  const data = (idx!==null)? state.showcase[idx] : {id:'show-'+Date.now(), title:'', teacher:'', students:0, public:true, desc:''};
+  title.textContent = (idx!==null)? 'Edit Showcase Course' : 'Add Showcase Course';
     body.innerHTML = `
-      <label><div class="muted">ID</div><input id="sc-id" class="input" value="${escapeHTML(data.id)}" ${idx!==null?'readonly':''}/></label>
-      <label><div class="muted">标题</div><input id="sc-title" class="input" value="${escapeHTML(data.title)}"/></label>
-      <label><div class="muted">教师</div><input id="sc-teacher" class="input" value="${escapeHTML(data.teacher||'')}"/></label>
-      <label><div class="muted">学生数</div><input id="sc-students" type="number" class="input" value="${data.students||0}"/></label>
-      <label><div class="muted">描述</div><textarea id="sc-desc" class="input" rows="3">${escapeHTML(data.desc||'')}</textarea></label>
+  <label><div class="muted">ID</div><input id="sc-id" class="input" value="${escapeHTML(data.id)}" ${idx!==null?'readonly':''}/></label>
+  <label><div class="muted">Title</div><input id="sc-title" class="input" value="${escapeHTML(data.title)}"/></label>
+  <label><div class="muted">Teacher</div><input id="sc-teacher" class="input" value="${escapeHTML(data.teacher||'')}"/></label>
+  <label><div class="muted">Students</div><input id="sc-students" type="number" class="input" value="${data.students||0}"/></label>
+  <label><div class="muted">Description</div><textarea id="sc-desc" class="input" rows="3">${escapeHTML(data.desc||'')}</textarea></label>
     `;
     save.onclick = ()=>{
       const id = qs('#sc-id').value.trim();
-      const item = {
+        const item = {
         id,
-        title: qs('#sc-title').value.trim() || '未命名课程',
-        teacher: qs('#sc-teacher').value.trim()||'教师',
+        title: qs('#sc-title').value.trim() || 'Unnamed Course',
+        teacher: qs('#sc-teacher').value.trim()||'Teacher',
         students: parseInt(qs('#sc-students').value||'0',10),
         desc: qs('#sc-desc').value.trim(),
         public:true
@@ -1022,7 +1029,7 @@
     qs('#modal-mask').style.display='flex';
   }
   function deleteShowcase(idx){
-    if(!confirm('确认删除该展示课程？')) return;
+  if(!confirm('Confirm delete this showcase course?')) return;
     state.showcase.splice(idx,1);
     renderHall();
   }
@@ -1031,32 +1038,32 @@
   function renderMeeting(){
     const html = `
       <div class='card'>
-        <h3>视频会议（占位）</h3>
-        <p class='muted'>未来将在这里集成 Zoom / WebRTC API。</p>
+  <h3>Video Meeting (placeholder)</h3>
+  <p class='muted'>Zoom / WebRTC integration will be added here in the future.</p>
         <div style='margin-top:12px;display:flex;gap:8px'>
-          <button class='btn primary' onclick="alert('占位：将打开视频会议（未来实现）')">开始会议（占位）</button>
-          <button class='btn' onclick="alert('占位：会议设置（未来实现）')">会议设置</button>
+          <button class='btn primary' onclick="alert('Placeholder: will open video meeting (future implementation)')">Start Meeting (placeholder)</button>
+          <button class='btn' onclick="alert('Placeholder: meeting settings (future implementation)')">Meeting Settings</button>
         </div>
       </div>`;
     mount(shell(html)); updateSidebar();
   }
   function renderAIStudio(){
-    const html = `<h2>AI 辅助功能</h2><div class='grid cols-2'><div class='card'><b>从材料生成题目</b></div><div class='card'><b>相似答案聚类</b></div></div>`;
+  const html = `<h2>AI Assistant</h2><div class='grid cols-2'><div class='card'><b>Generate Questions from Materials</b></div><div class='card'><b>Cluster Similar Answers</b></div></div>`;
     mount(shell(html)); updateSidebar();
   }
   function renderInsights(){
-    const html = `<h2>信息展示</h2><div class='grid cols-3'><div class='card'><b>学生参与度</b></div><div class='card'><b>平均正确率</b></div><div class='card'><b>提交时长</b></div></div>`;
+  const html = `<h2>Insights</h2><div class='grid cols-3'><div class='card'><b>Student Engagement</b></div><div class='card'><b>Average Accuracy</b></div><div class='card'><b>Submission Timing</b></div></div>`;
     mount(shell(html)); updateSidebar();
   }
 
-  /************** 路由 **************/
+  /************** Routes **************/
   function route(){
     removeFloatingUI();
     let h = location.hash || '';
     if(!h){
-      // 如果没有 hash，立即确定默认路由并同时更新 URL，
-      // 立即渲染目标页面（不要仅依赖 hashchange 事件），
-      // 这样可避免页面加载时出现空白（在某些环境下 hashchange 可能未及时触发）。
+  // If there's no hash, determine the default route and update the URL immediately,
+  // Render the target page immediately (don't rely only on the hashchange event),
+  // This prevents blank pages during load when hashchange may not fire promptly in some environments.
       const target = state.user ? '#/teacher/courses' : '#/login';
       // 更新地址栏
       location.hash = target;
@@ -1069,17 +1076,17 @@
     setTimeout(updateSidebar, 0);
   }
 
-  /************** 复制加入码（兜底） **************/
+  /************** Copy Join Code (fallback) **************/
   async function copyJoinCode(){
     const cid = sessionStorage.getItem('currCourse');
     const code = cid ? `JOIN-${cid}` : 'JOIN-CODE';
     try{
-      if(navigator.clipboard?.writeText){ await navigator.clipboard.writeText(code); alert('加入码已复制：' + code); }
-      else{ prompt('复制以下加入码：', code); }
-    }catch(e){ alert('复制失败：' + (e?.message||e)); }
+      if(navigator.clipboard?.writeText){ await navigator.clipboard.writeText(code); alert('Join code copied: ' + code); }
+      else{ prompt('Copy the join code below:', code); }
+    }catch(e){ alert('Copy failed: ' + (e?.message||e)); }
   }
 
-  /************** 启动 **************/
+  /************** Startup **************/
   document.addEventListener('DOMContentLoaded', ()=>{
     window.addEventListener('hashchange', route);
     route();
