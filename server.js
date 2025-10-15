@@ -2,12 +2,233 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const getDoubaoResponse = require('./api/llm_api/doubao_api.js');
+const { dbQuery, dbRun, tableManager, recordManager } = require('./api/database/database_manager.js');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3003;
 
 app.use(cors());
 app.use(express.json());
+
+//----------------------------ai调用接口---------
+/**
+ * AI接口：接收system和user消息，返回AI回复
+ * 请求体格式: { system: "系统提示词", user: "用户问题" }
+ */
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const { system, user } = req.body;
+    
+    // 验证输入
+    if (!system || !user) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: '缺少参数：需要提供system和user字段' 
+      });
+    }
+    
+    // 调用豆包API
+    const response = await getDoubaoResponse(system, user);
+    
+    // 返回结果
+    res.json({
+      ok: true,
+      data: {
+        response: response
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      message: error.message
+    });
+  }
+});
+
+//----------------------------------------------
+
+//----------------------------数据库调用接口---------
+
+// 表管理API
+app.get('/api/tables', async (req, res) => {
+    try {
+        const tables = await tableManager.getAllTables();
+        res.json({ ok: true, data: tables });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.post('/api/tables', async (req, res) => {
+    try {
+        const { tableName, columns } = req.body;
+        if (!tableName || !columns || !Array.isArray(columns)) {
+            return res.status(400).json({ ok: false, message: '无效的请求参数' });
+        }
+        
+        await tableManager.createTable(tableName, columns);
+        res.json({ ok: true, message: `表 ${tableName} 创建成功` });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.delete('/api/tables/:tableName', async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        await tableManager.dropTable(tableName);
+        res.json({ ok: true, message: `表 ${tableName} 已删除` });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.get('/api/tables/:tableName/structure', async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        const exists = await tableManager.tableExists(tableName);
+        if (!exists) {
+            return res.status(404).json({ ok: false, message: `表 ${tableName} 不存在` });
+        }
+        
+        const structure = await tableManager.getTableStructure(tableName);
+        res.json({ ok: true, data: structure });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+// 记录管理API
+app.get('/api/tables/:tableName/records', async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        const exists = await tableManager.tableExists(tableName);
+        if (!exists) {
+            return res.status(404).json({ ok: false, message: `表 ${tableName} 不存在` });
+        }
+        
+        // 构建查询条件
+        const where = {};
+        Object.keys(req.query).forEach(key => {
+            if (req.query[key] !== undefined && req.query[key] !== '') {
+                where[key] = req.query[key];
+            }
+        });
+        
+        const records = await recordManager.queryRecords(tableName, { where });
+        res.json({ ok: true, data: records });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.post('/api/tables/:tableName/records', async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        const data = req.body;
+        
+        const exists = await tableManager.tableExists(tableName);
+        if (!exists) {
+            return res.status(404).json({ ok: false, message: `表 ${tableName} 不存在` });
+        }
+        
+        await recordManager.insertRecord(tableName, data);
+        res.json({ ok: true, message: '记录添加成功' });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.put('/api/tables/:tableName/records', async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        const { where, data } = req.body;
+        
+        if (!where || !data) {
+            return res.status(400).json({ ok: false, message: '缺少where条件或data数据' });
+        }
+        
+        const exists = await tableManager.tableExists(tableName);
+        if (!exists) {
+            return res.status(404).json({ ok: false, message: `表 ${tableName} 不存在` });
+        }
+        
+        await recordManager.updateRecords(tableName, data, where);
+        res.json({ ok: true, message: '记录更新成功' });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.delete('/api/tables/:tableName/records', async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        const { where } = req.body;
+        
+        if (!where) {
+            return res.status(400).json({ ok: false, message: '缺少where条件' });
+        }
+        
+        const exists = await tableManager.tableExists(tableName);
+        if (!exists) {
+            return res.status(404).json({ ok: false, message: `表 ${tableName} 不存在` });
+        }
+        
+        await recordManager.deleteRecords(tableName, where);
+        res.json({ ok: true, message: '记录删除成功' });
+    } catch (error) {
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+// SQL执行接口 - 新增部分
+app.post('/api/sql', async (req, res) => {
+    try {
+        const { sql } = req.body;
+        
+        if (!sql || typeof sql !== 'string') {
+            return res.status(400).json({ 
+                ok: false, 
+                message: '请提供有效的SQL语句' 
+            });
+        }
+        
+        // 执行SQL语句
+        // 对于查询类语句使用dbQuery
+        // 对于修改类语句使用dbRun
+        const isSelect = sql.trim().toLowerCase().startsWith('select');
+        let result;
+        
+        if (isSelect) {
+            const rows = await dbQuery(sql);
+            result = { rows };
+        } else {
+            // 对于CREATE, INSERT, UPDATE, DELETE等语句
+            const runResult = await dbRun(sql);
+            result = runResult;
+        }
+        
+        // 如果是创建表或删除表的操作，刷新表缓存
+        const isDDL = ['create', 'alter', 'drop', 'truncate'].some(
+            cmd => sql.trim().toLowerCase().startsWith(cmd)
+        );
+        
+        res.json({
+            ok: true,
+            data: result,
+            message: isSelect ? '查询执行成功' : '操作执行成功'
+        });
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            message: error.message,
+            sql: req.body.sql // 返回出错的SQL语句用于调试
+        });
+    }
+});
+
+//----------------------------------------------
 
 // --- 模拟“数据库”：内存数据 ---
 const users = [
