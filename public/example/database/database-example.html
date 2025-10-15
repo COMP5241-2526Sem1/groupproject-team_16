@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库可视化管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .table-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .transition-height {
+                transition: max-height 0.3s ease-out;
+            }
+            .multi-select-dropdown {
+                position: relative;
+            }
+            .multi-select-options {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease-out;
+            }
+            .multi-select-options.open {
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .selected-tags {
+                flex-wrap: wrap;
+                gap: 4px;
+                padding: 2px;
+            }
+            .selected-tag {
+                background-color: #e0e7ff;
+                padding: 1px 6px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+            }
+            .sql-editor {
+                font-family: monospace;
+                line-height: 1.5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="mb-8">
+            <h1 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark flex items-center">
+                <i class="fa fa-database text-primary mr-3"></i>
+                数据库可视化管理系统
+            </h1>
+            <p class="text-gray-600 mt-2">创建、管理数据库表和记录，支持直接执行SQL语句</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- 左侧表列表 -->
+            <div class="lg:col-span-1 bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h2 class="font-semibold text-lg text-dark">数据库表</h2>
+                    <button id="createTableBtn" class="bg-primary text-white px-3 py-1 rounded text-sm hover:bg-primary/90 transition flex items-center">
+                        <i class="fa fa-plus mr-1"></i> 新建表
+                    </button>
+                </div>
+                <div class="p-4">
+                    <div class="relative">
+                        <input type="text" id="tableSearch" placeholder="搜索表..." 
+                            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <i class="fa fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <ul id="tableList" class="mt-4 space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+                        <li class="text-gray-500 italic text-center py-4">加载表列表中...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 右侧表内容和SQL编辑器 -->
+            <div class="lg:col-span-3 flex flex-col gap-6">
+                <!-- 表内容区域 -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div id="tableContent" class="p-6">
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fa fa-table text-5xl mb-4 opacity-30"></i>
+                            <p>请从左侧选择一个表进行操作</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SQL编辑器区域 -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-4 border-b">
+                        <h2 class="font-semibold text-lg text-dark flex items-center">
+                            <i class="fa fa-code text-primary mr-2"></i>
+                            SQL 编辑器
+                        </h2>
+                    </div>
+                    <div class="p-4">
+                        <div class="mb-4">
+                            <label for="sqlQuery" class="block text-gray-700 mb-2">输入SQL语句</label>
+                            <textarea id="sqlQuery" rows="6" class="sql-editor w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="例如: SELECT * FROM table_name;&#10;或 CREATE TABLE new_table (id INTEGER PRIMARY KEY);"></textarea>
+                            <div class="text-xs text-gray-500 mt-1">支持所有标准SQL语句，语句以分号(;)结束</div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <button id="clearSqlBtn" class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-50 text-sm">
+                                    <i class="fa fa-eraser mr-1"></i> 清空
+                                </button>
+                                <button id="formatSqlBtn" class="ml-2 px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-50 text-sm">
+                                    <i class="fa fa-indent mr-1"></i> 格式化
+                                </button>
+                            </div>
+                            <button id="executeSqlBtn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition flex items-center">
+                                <i class="fa fa-play mr-1"></i> 执行SQL
+                            </button>
+                        </div>
+                        
+                        <!-- SQL执行结果 -->
+                        <div class="mt-4">
+                            <h3 class="font-medium text-gray-800 mb-2">执行结果</h3>
+                            <div id="sqlResult" class="border rounded-md p-4 min-h-[100px] bg-gray-50 text-sm">
+                                <div class="text-gray-500 italic">执行结果将显示在这里</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建表模态框 -->
+    <div id="createTableModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h3 class="text-xl font-semibold">创建新表</h3>
+                <button id="closeCreateTableModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-5">
+                <form id="createTableForm">
+                    <div class="mb-4">
+                        <label for="tableName" class="block text-gray-700 mb-1">表名 *</label>
+                        <input type="text" id="tableName" required
+                            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-gray-700">表字段 *</label>
+                            <button type="button" id="addColumnBtn" class="text-primary text-sm hover:underline">
+                                <i class="fa fa-plus-circle"></i> 添加字段
+                            </button>
+                        </div>
+                        
+                        <div id="columnsContainer">
+                            <!-- 约束条件多选下拉框 -->
+                            <div class="grid grid-cols-12 gap-3 items-end p-3 border rounded-md mb-2 bg-gray-50 column-row">
+                                <div class="col-span-3">
+                                    <label class="block text-sm text-gray-600 mb-1">字段名</label>
+                                    <input type="text" name="columnName[]" required
+                                        class="w-full px-2 py-1 border rounded text-sm">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm text-gray-600 mb-1">数据类型</label>
+                                    <select name="columnType[]" class="w-full px-2 py-1 border rounded text-sm">
+                                        <option value="TEXT">TEXT</option>
+                                        <option value="INTEGER">INTEGER</option>
+                                        <option value="REAL">REAL</option>
+                                        <option value="BLOB">BLOB</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-4">
+                                    <label class="block text-sm text-gray-600 mb-1">约束条件（可多选）</label>
+                                    <div class="multi-select-dropdown w-full">
+                                        <div class="selected-tags border rounded px-2 py-1 min-h-[28px] cursor-pointer flex items-center">
+                                            <span class="placeholder text-gray-400 text-sm">选择约束...</span>
+                                        </div>
+                                        <div class="multi-select-options border-x border-b rounded-b mt-[-1px] bg-white absolute w-full z-10">
+                                            <div class="p-1">
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="PRIMARY KEY" class="mr-2">
+                                                    <span>PRIMARY KEY（主键）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="NOT NULL" class="mr-2">
+                                                    <span>NOT NULL（非空）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="UNIQUE" class="mr-2">
+                                                    <span>UNIQUE（唯一）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="AUTOINCREMENT" class="mr-2">
+                                                    <span>AUTOINCREMENT（自增）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="DEFAULT 0" class="mr-2">
+                                                    <span>DEFAULT 0（默认0）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="DEFAULT ''" class="mr-2">
+                                                    <span>DEFAULT ''（默认空字符串）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="DEFAULT CURRENT_TIMESTAMP" class="mr-2">
+                                                    <span>DEFAULT CURRENT_TIMESTAMP（默认当前时间）</span>
+                                                </label>
+                                                <label class="flex items-center p-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                    <input type="checkbox" value="CUSTOM" class="mr-2">
+                                                    <span>自定义约束...</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="columnConstraints[]">
+                                    </div>
+                                </div>
+                                <div class="col-span-4 hidden custom-constraint-input">
+                                    <label class="block text-sm text-gray-600 mb-1">自定义约束</label>
+                                    <input type="text" placeholder="例如: CHECK(age>0), FOREIGN KEY..."
+                                        class="w-full px-2 py-1 border rounded text-sm custom-constraint-text">
+                                </div>
+                                <div class="col-span-1">
+                                    <button type="button" class="removeColumnBtn text-danger px-2 py-1 opacity-50 hover:opacity-100" disabled>
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" id="cancelCreateTable" class="px-4 py-2 border rounded-md hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">创建表</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑记录模态框 -->
+    <div id="recordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h3 id="recordModalTitle" class="text-xl font-semibold">添加记录</h3>
+                <button id="closeRecordModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-5">
+                <form id="recordForm">
+                    <input type="hidden" id="currentTableName">
+                    <input type="hidden" id="currentRecordId">
+                    
+                    <div id="recordFieldsContainer">
+                        <!-- 记录字段将通过JS动态生成 -->
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" id="cancelRecord" class="px-4 py-2 border rounded-md hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="database-example.js"></script>
+</body>
+</html>
+    
